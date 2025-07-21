@@ -135,7 +135,7 @@ export default function AddEventModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notification, setNotification] = useState<{
-    type: 'success' | 'error' | 'info';
+    type: 'success' | 'error';
     message: string;
     isVisible: boolean;
   } | null>(null);

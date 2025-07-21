@@ -21,12 +21,13 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       setLoading(false);
       router.push('/home'); // Redirect to home after successful login
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
+      const errorCode = error && typeof error === 'object' && 'code' in error ? (error as any).code : '';
       setError(
-        error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password'
+        errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password'
           ? 'Invalid email or password'
-          : error.code === 'auth/invalid-email'
+          : errorCode === 'auth/invalid-email'
           ? 'Invalid email format'
           : 'An error occurred during login. Please try again.'
       );

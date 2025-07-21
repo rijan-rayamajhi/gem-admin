@@ -28,7 +28,7 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onSuccess, te
       console.log('Team member deleted successfully');
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting team member:', error);
       setError('Failed to delete team member. Please try again.');
     } finally {

@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Timestamp } from 'firebase/firestore';
 import { CarosealAd } from '@/lib/carosealAdService';
 import Notification from './Notification';
-import { useTimestampForm, CarosealAdFormData } from '@/hooks/useTimestampForm';
-import { TimestampUtils } from '@/lib/timestampUtils';
+import { useTimestampForm } from '@/hooks/useTimestampForm';
 
 interface AddCarosealAdModalProps {
   isOpen: boolean;
@@ -85,7 +83,7 @@ export default function AddCarosealAdModal({
       await onSave(submissionData);
       onClose();
       resetForm();
-    } catch (error) {
+    } catch {
       setNotification({
         type: 'error',
         message: 'Failed to save ad. Please try again.',

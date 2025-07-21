@@ -8,7 +8,7 @@ import { licenseVerificationService, DrivingLicense } from '@/lib/licenseVerific
 import Notification from '@/components/Notification';
 
 export default function LicenseVerificationPage() {
-  const { user } = useAuth();
+  const {} = useAuth();
   const [verifications, setVerifications] = useState<DrivingLicense[]>([]);
   const [filteredVerifications, setFilteredVerifications] = useState<DrivingLicense[]>([]);
   const [loading, setLoading] = useState(true);

@@ -10,6 +10,7 @@ export interface AppSettings {
   
   // Legal & Compliance
   termsAndConditions: string;
+  privacyPolicy: string;
   
   // Contact Information
   contactEmail: string;
@@ -97,6 +98,7 @@ class AppSettingsService {
       
       // Legal & Compliance
       termsAndConditions: 'By using this application, you agree to our terms and conditions...',
+      privacyPolicy: 'We value your privacy and are committed to protecting your personal information...',
       
       // Contact Information
       contactEmail: 'support@gemadmin.com',

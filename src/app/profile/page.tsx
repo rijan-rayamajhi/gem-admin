@@ -58,10 +58,10 @@ export default function ProfilePage() {
         type: 'success',
         text: 'Profile updated successfully!'
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       setMessage({
         type: 'error',
-        text: error.message || 'Failed to update profile'
+        text: error && typeof error === 'object' && 'message' in error ? (error as any).message : 'Failed to update profile'
       });
     } finally {
       setIsLoading(false);

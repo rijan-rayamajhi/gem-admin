@@ -2,7 +2,6 @@
 
 import { ReactNode } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth-context';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 

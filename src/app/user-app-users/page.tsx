@@ -8,7 +8,7 @@ import Notification from '@/components/Notification';
 import { userAppService, UserAppUser } from '@/lib/userAppService';
 
 export default function UserAppUsersPage() {
-  const { user } = useAuth();
+  const {} = useAuth();
   const [userAppUsers, setUserAppUsers] = useState<UserAppUser[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserAppUser[]>([]);
   const [searchTerm, setSearchTerm] = useState('');

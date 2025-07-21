@@ -125,7 +125,6 @@ export default function VehicleBrandRequestsPage() {
           status: 'Active',
           models: [],
           vehicleType: request.vehicleType,
-          description: request.description,
           logoUrl: '',
         });
       } else if (request.type === 'model') {
@@ -291,7 +290,7 @@ export default function VehicleBrandRequestsPage() {
                 </svg>
               ),
               bg: 'bg-purple-100'
-            }].map((card, idx) => (
+            }].map((card) => (
               <div key={card.label} className={`bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center min-h-[120px] text-center`}>
                 <div className={`p-3 rounded-full ${card.bg} flex items-center justify-center mb-2`}>
                   {card.icon}

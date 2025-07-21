@@ -237,14 +237,15 @@ export default function AddTeamMemberModal({ isOpen, onClose, onSuccess }: AddTe
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating user:', error);
+      const errorCode = error && typeof error === 'object' && 'code' in error ? (error as any).code : '';
       setError(
-        error.code === 'auth/email-already-in-use'
+        errorCode === 'auth/email-already-in-use'
           ? 'An account with this email already exists'
-          : error.code === 'auth/invalid-email'
+          : errorCode === 'auth/invalid-email'
           ? 'Invalid email format'
-          : error.code === 'auth/weak-password'
+          : errorCode === 'auth/weak-password'
           ? 'Password is too weak'
           : 'An error occurred while creating the user'
       );

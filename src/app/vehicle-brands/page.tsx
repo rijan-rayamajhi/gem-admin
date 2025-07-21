@@ -40,7 +40,7 @@ export default function VehicleBrandsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   
@@ -215,13 +215,7 @@ export default function VehicleBrandsPage() {
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const getRequestTypeColor = (type: string) => {
-    const colors = {
-      brand: 'bg-blue-100 text-blue-800',
-      model: 'bg-purple-100 text-purple-800',
-    };
-    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
+
 
   const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -592,7 +586,7 @@ export default function VehicleBrandsPage() {
     }
   };
 
-  const requestStats = getRequestStats();
+
   const modelRequestStats = getModelRequestStats();
   const combinedBrandRequestStats = getCombinedBrandRequestStats();
 

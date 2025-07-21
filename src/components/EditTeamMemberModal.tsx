@@ -161,7 +161,7 @@ export default function EditTeamMemberModal({ isOpen, onClose, onSuccess, teamMe
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Edit Team Member</h2>
-              <p className="text-sm text-gray-600">Update {teamMember.firstName} {teamMember.lastName}'s information</p>
+              <p className="text-sm text-gray-600">Update {teamMember.firstName} {teamMember.lastName}&apos;s information</p>
             </div>
             <button
               onClick={onClose}

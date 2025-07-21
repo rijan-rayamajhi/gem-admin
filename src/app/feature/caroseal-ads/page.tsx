@@ -7,13 +7,32 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Notification from '@/components/Notification';
 import AddCarosealAdModal from '@/components/AddCarosealAdModal';
 import { carosealAdService, CarosealAd } from '@/lib/carosealAdService';
-import { Timestamp } from 'firebase/firestore';
+
+// Type for form data when creating/editing ads
+interface CarosealAdFormData {
+  title: string;
+  description: string;
+  adImage?: File | string;
+  existingImageUrl?: string;
+  actionType: {
+    type: 'website' | 'app_screen';
+    value: string;
+  };
+  location: {
+    type: 'specific' | 'pan_india';
+    latitude?: number;
+    longitude?: number;
+    radius?: number;
+  };
+  startDate: any; // Timestamp or compatible type
+  endDate: any; // Timestamp or compatible type
+}
 import ViewCarosealAdModal from '@/components/ViewCarosealAdModal';
 import GenericDeleteModal from '@/components/GenericDeleteModal';
 import { TimestampUtils } from '@/lib/timestampUtils';
 
 export default function CarosealAdsPage() {
-  const { user } = useAuth();
+  const {} = useAuth();
   const [ads, setAds] = useState<CarosealAd[]>([]);
   const [filteredAds, setFilteredAds] = useState<CarosealAd[]>([]);
   const [loading, setLoading] = useState(false);
@@ -77,14 +96,14 @@ export default function CarosealAdsPage() {
   /**
    * Handle creating a new ad - now works directly with Timestamps
    */
-  const handleAddAd = async (adData: any) => {
+  const handleAddAd = async (adData: CarosealAdFormData) => {
     setActionLoading(true);
     try {
       console.log('Starting ad creation process with timestamp data...', adData);
       
       // Upload image first if provided
       let adImageUrl = '';
-      if (adData.adImage) {
+      if (adData.adImage && adData.adImage instanceof File) {
         console.log('Uploading image...', adData.adImage.name);
         adImageUrl = await carosealAdService.uploadFile(
           adData.adImage,
@@ -135,7 +154,7 @@ export default function CarosealAdsPage() {
   /**
    * Handle editing an ad - simplified with direct Timestamp usage
    */
-  const handleEditAd = async (adData: any) => {
+  const handleEditAd = async (adData: CarosealAdFormData) => {
     setActionLoading(true);
     try {
       let adImageUrl = selectedAd?.adImage || '';

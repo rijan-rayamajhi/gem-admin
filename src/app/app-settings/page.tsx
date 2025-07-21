@@ -66,7 +66,7 @@ export default function AppSettingsPage() {
     }
   }, [settings]);
 
-  const handleInputChange = (section: string, field: string, value: any) => {
+  const handleInputChange = (section: string, field: string, value: string) => {
     setFormData(prev => {
       const sectionData = prev[section as keyof typeof prev];
       if (typeof sectionData === 'object' && sectionData !== null) {
@@ -82,7 +82,7 @@ export default function AppSettingsPage() {
     });
   };
 
-  const handleDirectInputChange = (field: string, value: any) => {
+  const handleDirectInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -100,7 +100,7 @@ export default function AppSettingsPage() {
         message: 'App settings updated successfully!',
         isVisible: true,
       });
-    } catch (err) {
+    } catch {
       setNotification({
         type: 'error',
         message: 'Failed to update app settings. Please try again.',

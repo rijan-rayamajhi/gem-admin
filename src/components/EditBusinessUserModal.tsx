@@ -77,7 +77,7 @@ export default function EditBusinessUserModal({
         ...prev.personalInfo,
         [field]: value,
       }
-    }));
+    } as Partial<BusinessUser>));
   };
 
   const validateForm = () => {

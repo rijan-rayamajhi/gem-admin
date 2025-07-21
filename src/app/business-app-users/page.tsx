@@ -10,7 +10,7 @@ import DeleteBusinessUserModal from '@/components/DeleteBusinessUserModal';
 import { businessUserService, BusinessUser } from '@/lib/businessUserService';
 
 export default function BusinessAppUsersPage() {
-  const { user } = useAuth();
+  const {} = useAuth();
   const [businessUsers, setBusinessUsers] = useState<BusinessUser[]>([]);
   const [filteredBusinessUsers, setFilteredBusinessUsers] = useState<BusinessUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,32 +124,6 @@ export default function BusinessAppUsersPage() {
       rejected: 'bg-red-100 text-red-800',
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
-
-  const handleStatusToggle = async (businessId: string, currentStatus: boolean) => {
-    try {
-      await businessUserService.updateBusinessUserStatus(businessId, !currentStatus);
-      
-      // Update local state
-      setBusinessUsers(prev => prev.map(business => 
-        business.id === businessId 
-          ? { ...business, isActive: !currentStatus }
-          : business
-      ));
-      
-      setNotification({
-        type: 'success',
-        message: `Business ${!currentStatus ? 'activated' : 'deactivated'} successfully`,
-        isVisible: true,
-      });
-    } catch (error) {
-      console.error('Error updating status:', error);
-      setNotification({
-        type: 'error',
-        message: 'Failed to update business status',
-        isVisible: true,
-      });
-    }
   };
 
   const handleEdit = (businessUser: BusinessUser) => {

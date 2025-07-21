@@ -8,7 +8,7 @@ import { dailyRewardService, DailyRewardConfig } from '@/lib/dailyRewardService'
 import Notification from '@/components/Notification';
 
 export default function DailyRewardsPage() {
-  const { user } = useAuth();
+  const {} = useAuth();
   const [config, setConfig] = useState<DailyRewardConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

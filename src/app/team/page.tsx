@@ -11,7 +11,7 @@ import Notification from '@/components/Notification';
 import { getTeamMembers, TeamMember } from '@/lib/teamService';
 
 export default function TeamPage() {
-  const { user } = useAuth();
+  const {} = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

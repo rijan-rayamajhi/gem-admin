@@ -6,12 +6,12 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import DashboardLayout from '@/components/DashboardLayout';
 import Notification from '@/components/Notification';
 import AddEventModal from '../../../components/AddEventModal';
-import { eventService, Event } from '@/lib/eventService';
+import { eventService, Event, EventUpdateData } from '@/lib/eventService';
 import ViewEventModal from '../../../components/ViewEventModal';
 import DeleteEventModal from '../../../components/DeleteEventModal';
 
 export default function EventsPage() {
-  const { user } = useAuth();
+  const {} = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,9 +102,9 @@ export default function EventsPage() {
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const formatDate = (dateString: any) => {
+  const formatDate = (dateString: Date | { toDate(): Date } | string | null | undefined) => {
     if (!dateString) return 'Not set';
-    const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+    const date = (dateString as any).toDate ? (dateString as any).toDate() : new Date(dateString as string | Date);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -118,10 +118,10 @@ export default function EventsPage() {
     return Math.round((attendees / maxAttendees) * 100);
   };
 
-  const handleAddEvent = async (eventData: any) => {
+  const handleAddEvent = async (eventData: EventUpdateData) => {
     try {
       // Create event in Firebase
-      const eventId = await eventService.createEvent(eventData);
+      await eventService.createEvent(eventData);
       
       // Fetch updated events list
       const updatedEvents = await eventService.getEvents();
@@ -144,7 +144,7 @@ export default function EventsPage() {
     }
   };
 
-  const handleEditEvent = async (eventData: any) => {
+  const handleEditEvent = async (eventData: EventUpdateData) => {
     if (!selectedEvent?.id) return;
     
     try {
