@@ -142,6 +142,55 @@ export default function HomePage() {
                 </div>
               </PermissionGuard>
 
+              {/* Quality Assurance Section */}
+              <PermissionGuard permissions={['quality-assurance', 'report-bugs']}>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-1">Quality Assurance</h2>
+                  <p className="text-sm text-gray-500 mb-4">Create releases and report bugs to ensure the quality of the application.</p>
+                  <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Create Release Card */}
+                      <PermissionGuard permission="quality-assurance">
+                        <Link href="/quality-assurance" className="block h-[120px]">
+                          <div className="bg-orange-50 rounded-lg p-6 hover:bg-orange-100 transition-all duration-200 border border-orange-200 cursor-pointer h-full hover:shadow-md">
+                            <div className="flex items-center space-x-4">
+                              <div className="bg-orange-100 p-3 rounded-lg flex-shrink-0">
+                                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-medium text-gray-900">Create Release</h3>
+                                <p className="text-sm text-gray-600">Create and manage release entries</p>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      </PermissionGuard>
+                      {/* Report Bugs Card */}
+                      <PermissionGuard permission="report-bugs">
+                        <Link href="/report-bugs" className="block h-[120px]">
+                          <div className="bg-red-50 rounded-lg p-6 hover:bg-red-100 transition-all duration-200 border border-red-200 cursor-pointer h-full hover:shadow-md">
+                            <div className="flex items-center space-x-4">
+                              <div className="bg-red-100 p-3 rounded-lg flex-shrink-0">
+                                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v2h6V4a1 1 0 00-1-1m-4 0h4" />
+                                  <circle cx="12" cy="17" r="1" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-medium text-gray-900">Report Bugs</h3>
+                                <p className="text-sm text-gray-600">Submit and track application bugs</p>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      </PermissionGuard>
+                    </div>
+                  </div>
+                </div>
+              </PermissionGuard>
+
               {/* Features Section */}
               <PermissionGuard permissions={['caroseal-ads']}>
                 <div>
