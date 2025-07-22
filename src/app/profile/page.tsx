@@ -1,22 +1,82 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/HomeLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { updateProfile, updateEmail, updatePassword } from 'firebase/auth';
+import { updateProfile, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { StorageService } from '@/lib/storageService';
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoUploadProgress, setPhotoUploadProgress] = useState(0);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string>('');
   const [formData, setFormData] = useState({
-    displayName: user?.displayName || '',
-    email: user?.email || '',
+    displayName: '',
+    email: '',
     newPassword: '',
     confirmPassword: '',
     currentPassword: ''
   });
+
+  // Initialize form data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        displayName: user.displayName || '',
+        email: user.email || '',
+      }));
+    }
+  }, [user]);
+
+  const showMessage = (type: 'success' | 'error', text: string) => {
+    setMessage({ type, text });
+    // Auto-hide success messages after 5 seconds
+    if (type === 'success') {
+      setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+    }
+  };
+
+  const validateForm = () => {
+    // If trying to change password, validate password fields
+    if (formData.newPassword || formData.confirmPassword) {
+      if (!formData.currentPassword) {
+        showMessage('error', 'Current password is required to change password');
+        return false;
+      }
+      if (formData.newPassword !== formData.confirmPassword) {
+        showMessage('error', 'New passwords do not match');
+        return false;
+      }
+      if (formData.newPassword.length < 6) {
+        showMessage('error', 'New password must be at least 6 characters long');
+        return false;
+      }
+    }
+
+    // If trying to change email, validate current password
+    if (formData.email !== user?.email && !formData.currentPassword) {
+      showMessage('error', 'Current password is required to change email');
+      return false;
+    }
+
+    return true;
+  };
+
+  const reauthenticate = async () => {
+    if (!user || !user.email || !formData.currentPassword) {
+      throw new Error('Current password is required for this operation');
+    }
+
+    const credential = EmailAuthProvider.credential(user.email, formData.currentPassword);
+    await reauthenticateWithCredential(user, credential);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -24,45 +84,181 @@ export default function ProfilePage() {
       ...prev,
       [name]: value
     }));
+    
+    // Clear error messages when user starts typing
+    if (message.type === 'error') {
+      setMessage({ type: '', text: '' });
+    }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    const validation = StorageService.validateImageFile(file);
+    if (!validation.isValid) {
+      showMessage('error', validation.error || 'Invalid file');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setProfilePhotoPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    setProfilePhotoFile(file);
+    
+    // Clear any existing error messages
+    if (message.type === 'error') {
+      setMessage({ type: '', text: '' });
+    }
+  };
+
+  const removePhoto = () => {
+    setProfilePhotoFile(null);
+    setProfilePhotoPreview('');
+    setPhotoUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadProfilePhoto = async (): Promise<string> => {
+    if (!profilePhotoFile || !user?.uid) {
+      throw new Error('Photo file and user authentication are required');
+    }
+
+    setIsUploadingPhoto(true);
+    setPhotoUploadProgress(0);
+
+    try {
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setPhotoUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 150);
+
+      const result = await StorageService.uploadProfilePicture(profilePhotoFile, user.uid);
+      
+      clearInterval(progressInterval);
+      setPhotoUploadProgress(100);
+      
+      return result.url;
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      throw new Error('Failed to upload profile photo');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleChangePhoto = () => {
+    fileInputRef.current?.click();
+  };
+
+  const getCurrentPhotoUrl = () => {
+    if (profilePhotoPreview) return profilePhotoPreview;
+    if (user?.photoURL) return user.photoURL;
+    return null;
+  };
+
+  const getDisplayInitials = () => {
+    const name = formData.displayName || user?.displayName || user?.email || 'U';
+    return name.charAt(0).toUpperCase();
   };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
+    if (!validateForm()) return;
+
     setIsLoading(true);
     setMessage({ type: '', text: '' });
 
     try {
-      // Update display name
-      if (formData.displayName !== user.displayName) {
-        await updateProfile(user, {
-          displayName: formData.displayName
-        });
+      const needsReauth = formData.email !== user.email || formData.newPassword;
+      
+      // Reauthenticate if needed
+      if (needsReauth) {
+        await reauthenticate();
       }
 
-      // Update email
+      // Upload new profile photo if selected
+      let photoURL = user.photoURL;
+      if (profilePhotoFile) {
+        photoURL = await uploadProfilePhoto();
+      }
+
+      // Update profile (display name and photo)
+      const profileUpdates: any = {};
+      if (formData.displayName !== user.displayName) {
+        profileUpdates.displayName = formData.displayName;
+      }
+      if (photoURL !== user.photoURL) {
+        profileUpdates.photoURL = photoURL;
+      }
+
+      if (Object.keys(profileUpdates).length > 0) {
+        await updateProfile(user, profileUpdates);
+      }
+
+      // Update email (requires reauthentication)
       if (formData.email !== user.email) {
         await updateEmail(user, formData.email);
       }
 
-      // Update password
+      // Update password (requires reauthentication)
       if (formData.newPassword) {
-        if (formData.newPassword !== formData.confirmPassword) {
-          throw new Error('New passwords do not match');
-        }
         await updatePassword(user, formData.newPassword);
+        // Clear password fields after successful update
+        setFormData(prev => ({
+          ...prev,
+          newPassword: '',
+          confirmPassword: '',
+          currentPassword: ''
+        }));
       }
 
-      setMessage({
-        type: 'success',
-        text: 'Profile updated successfully!'
-      });
-    } catch (error: unknown) {
-      setMessage({
-        type: 'error',
-        text: error && typeof error === 'object' && 'message' in error ? (error as any).message : 'Failed to update profile'
-      });
+      // Clear photo upload state after successful update
+      if (profilePhotoFile) {
+        setProfilePhotoFile(null);
+        setProfilePhotoPreview('');
+        setPhotoUploadProgress(0);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+
+      showMessage('success', 'Profile updated successfully!');
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      
+      // Handle specific Firebase errors
+      let errorMessage = 'Failed to update profile';
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Current password is incorrect';
+      } else if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already in use by another account';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email format';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak';
+      } else if (error.code === 'auth/requires-recent-login') {
+        errorMessage = 'Please log out and log back in before changing your password or email';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      showMessage('error', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -99,29 +295,96 @@ export default function ProfilePage() {
 
               <form onSubmit={handleProfileUpdate} className="space-y-6">
                 {/* Profile Picture Section */}
-                <div className="flex items-center space-x-6 mb-6">
-                  <div 
-                    className="w-20 h-20 rounded-full flex items-center justify-center"
-                    style={{ 
-                      backgroundColor: 'var(--color-primary-600)',
-                      color: 'var(--color-text-inverse)'
-                    }}
-                  >
-                    <span className="text-3xl">
-                      {formData.displayName ? formData.displayName[0].toUpperCase() : 'U'}
-                    </span>
+                <div className="flex items-start space-x-6 mb-6">
+                  <div className="flex flex-col items-center space-y-4">
+                    {/* Profile Picture Display */}
+                    <div 
+                      className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden border-2"
+                      style={{ 
+                        backgroundColor: getCurrentPhotoUrl() ? 'transparent' : 'var(--color-primary-600)',
+                        color: 'var(--color-text-inverse)',
+                        borderColor: 'var(--color-border-medium)'
+                      }}
+                    >
+                      {getCurrentPhotoUrl() ? (
+                        <img 
+                          src={getCurrentPhotoUrl()!} 
+                          alt="Profile" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl font-medium">{getDisplayInitials()}</span>
+                      )}
+                    </div>
+
+                    {/* Upload Progress */}
+                    {isUploadingPhoto && (
+                      <div className="w-24">
+                        <div className="bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${photoUploadProgress}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">{photoUploadProgress}%</p>
+                      </div>
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    className="px-4 py-2 rounded-md shadow-theme-sm"
-                    style={{ 
-                      backgroundColor: 'var(--color-background-secondary)',
-                      color: 'var(--color-text-secondary)',
-                      border: '1px solid var(--color-border-medium)'
-                    }}
-                  >
-                    Change Photo
-                  </button>
+
+                  <div className="flex-1">
+                    {/* Photo Controls */}
+                    <div className="space-y-3">
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          onClick={handleChangePhoto}
+                          disabled={isUploadingPhoto}
+                          className="px-4 py-2 rounded-md shadow-theme-sm hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ 
+                            backgroundColor: 'var(--color-primary-600)',
+                            color: 'var(--color-text-inverse)'
+                          }}
+                        >
+                          {profilePhotoFile ? 'Change Photo' : (user?.photoURL ? 'Update Photo' : 'Upload Photo')}
+                        </button>
+
+                        {(profilePhotoFile || user?.photoURL) && (
+                          <button
+                            type="button"
+                            onClick={removePhoto}
+                            disabled={isUploadingPhoto}
+                            className="px-4 py-2 rounded-md shadow-theme-sm hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                            style={{ 
+                              backgroundColor: 'var(--color-background-secondary)',
+                              color: 'var(--color-text-secondary)',
+                              border: '1px solid var(--color-border-medium)'
+                            }}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Photo Info */}
+                      <div className="text-sm text-gray-500">
+                        <p>Upload a photo to personalize your profile</p>
+                        <p>Supported formats: JPEG, PNG, WebP (Max 5MB)</p>
+                        {profilePhotoFile && (
+                          <p className="text-blue-600 mt-1">New photo selected: {profilePhotoFile.name}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Hidden File Input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                      disabled={isUploadingPhoto}
+                    />
+                  </div>
                 </div>
 
                 {/* Basic Information */}
@@ -140,7 +403,7 @@ export default function ProfilePage() {
                       name="displayName"
                       value={formData.displayName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 rounded-md shadow-theme-sm"
+                      className="w-full px-3 py-2 rounded-md shadow-theme-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       style={{ 
                         backgroundColor: 'var(--color-background-primary)',
                         border: '1px solid var(--color-border-medium)',
@@ -163,7 +426,7 @@ export default function ProfilePage() {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 rounded-md shadow-theme-sm"
+                      className="w-full px-3 py-2 rounded-md shadow-theme-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       style={{ 
                         backgroundColor: 'var(--color-background-primary)',
                         border: '1px solid var(--color-border-medium)',
@@ -189,6 +452,7 @@ export default function ProfilePage() {
                       style={{ color: 'var(--color-text-secondary)' }}
                     >
                       Current Password
+                      <span className="text-xs text-gray-500 ml-1">(required for email/password changes)</span>
                     </label>
                     <input
                       type="password"
@@ -196,7 +460,7 @@ export default function ProfilePage() {
                       name="currentPassword"
                       value={formData.currentPassword}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 rounded-md shadow-theme-sm"
+                      className="w-full px-3 py-2 rounded-md shadow-theme-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       style={{ 
                         backgroundColor: 'var(--color-background-primary)',
                         border: '1px solid var(--color-border-medium)',
@@ -212,6 +476,7 @@ export default function ProfilePage() {
                       style={{ color: 'var(--color-text-secondary)' }}
                     >
                       New Password
+                      <span className="text-xs text-gray-500 ml-1">(leave blank to keep current)</span>
                     </label>
                     <input
                       type="password"
@@ -219,7 +484,7 @@ export default function ProfilePage() {
                       name="newPassword"
                       value={formData.newPassword}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 rounded-md shadow-theme-sm"
+                      className="w-full px-3 py-2 rounded-md shadow-theme-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       style={{ 
                         backgroundColor: 'var(--color-background-primary)',
                         border: '1px solid var(--color-border-medium)',
@@ -242,7 +507,7 @@ export default function ProfilePage() {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 rounded-md shadow-theme-sm"
+                      className="w-full px-3 py-2 rounded-md shadow-theme-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       style={{ 
                         backgroundColor: 'var(--color-background-primary)',
                         border: '1px solid var(--color-border-medium)',
@@ -256,13 +521,11 @@ export default function ProfilePage() {
                 <div className="flex justify-end pt-6">
                   <button
                     type="submit"
-                    disabled={isLoading}
-                    className="px-4 py-2 rounded-md shadow-theme-md"
+                    disabled={isLoading || isUploadingPhoto}
+                    className="px-6 py-2 rounded-md shadow-theme-md transition-all hover:opacity-90 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                     style={{ 
                       backgroundColor: 'var(--color-primary-600)',
-                      color: 'var(--color-text-inverse)',
-                      opacity: isLoading ? 0.7 : 1,
-                      cursor: isLoading ? 'not-allowed' : 'pointer'
+                      color: 'var(--color-text-inverse)'
                     }}
                   >
                     {isLoading ? 'Saving...' : 'Save Changes'}

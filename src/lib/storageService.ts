@@ -71,6 +71,19 @@ export class StorageService {
   }
 
   /**
+   * Upload profile picture
+   * @param file - The profile image file
+   * @param userId - User ID for filename
+   * @returns Promise with download URL and storage path
+   */
+  static async uploadProfilePicture(file: File, userId: string): Promise<UploadResult> {
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${userId}-${Date.now()}.${fileExtension}`;
+    
+    return this.uploadFile(file, 'profile-pictures/', fileName);
+  }
+
+  /**
    * Validate image file
    * @param file - The file to validate
    * @returns Validation result

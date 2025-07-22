@@ -79,8 +79,16 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                   href="/profile" 
                   className="flex items-center space-x-3 p-2 rounded-xl hover:bg-[var(--color-background-secondary)] transition-all duration-200"
                 >
-                  <div className="w-10 h-10 bg-[var(--color-primary-500)] rounded-xl flex items-center justify-center shadow-theme-sm">
-                    <span className="text-[var(--color-text-inverse)] text-sm font-medium">{getUserInitials()}</span>
+                  <div className="w-10 h-10 bg-[var(--color-primary-500)] rounded-xl flex items-center justify-center shadow-theme-sm overflow-hidden">
+                    {user?.photoURL ? (
+                      <img 
+                        src={user.photoURL} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-[var(--color-text-inverse)] text-sm font-medium">{getUserInitials()}</span>
+                    )}
                   </div>
                   <div className="hidden md:block">
                     <p className="text-[var(--color-text-primary)] text-sm font-medium">{getDisplayName()}</p>
