@@ -160,7 +160,7 @@ export default function PermissionsDemoPage() {
               {/* Teams Permission Content */}
               <div className="border border-gray-200 rounded-lg p-4">
                 <h3 className="font-medium text-gray-700 mb-2">Teams Permission Content</h3>
-                <PermissionGuard permission="teams" fallback={<p className="text-red-600">❌ You need 'teams' permission to see this content</p>}>
+                <PermissionGuard permission="teams" fallback={<p className="text-red-600">❌ You need &apos;teams&apos; permission to see this content</p>}>
                   <p className="text-green-600">✅ You have teams permission! You can see this content.</p>
                 </PermissionGuard>
               </div>

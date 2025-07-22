@@ -187,7 +187,7 @@ export default function HomePage() {
                       <div className="ml-4">
                         <h3 className="text-lg font-medium text-yellow-800">Limited Access</h3>
                         <p className="text-yellow-700">
-                          You don't have permissions to access any admin features. Please contact your administrator to request access to specific modules.
+                          You don&apos;t have permissions to access any admin features. Please contact your administrator to request access to specific modules.
                         </p>
                       </div>
                     </div>
