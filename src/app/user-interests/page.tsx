@@ -6,7 +6,7 @@ import AddUserInterestModal from '@/components/AddUserInterestModal';
 import GenericDeleteModal from '@/components/GenericDeleteModal';
 import Notification from '@/components/Notification';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardLayout from '@/components/DashboardLayout';
+import DashboardLayout from '@/components/HomeLayout';
 
 export default function UserInterestsPage() {
   const [interests, setInterests] = useState<UserInterest[]>([]);

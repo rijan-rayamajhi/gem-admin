@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/auth-context';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardLayout from '@/components/DashboardLayout';
+import DashboardLayout from '@/components/HomeLayout';
 
 const flashRewards = [
   {

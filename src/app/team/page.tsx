@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardLayout from '@/components/DashboardLayout';
+import DashboardLayout from '@/components/HomeLayout';
 import AddTeamMemberModal from '@/components/AddTeamMemberModal';
 import EditTeamMemberModal from '@/components/EditTeamMemberModal';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';

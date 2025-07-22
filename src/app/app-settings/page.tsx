@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAppSettings } from '@/lib/useAppSettings';
-import DashboardLayout from '@/components/DashboardLayout';
+import DashboardLayout from '@/components/HomeLayout';
 import Notification from '@/components/Notification';
 
 export default function AppSettingsPage() {

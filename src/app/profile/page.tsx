@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import DashboardLayout from '@/components/DashboardLayout';
+import DashboardLayout from '@/components/HomeLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { updateProfile, updateEmail, updatePassword } from 'firebase/auth';
 

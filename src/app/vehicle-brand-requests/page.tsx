@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardLayout from '@/components/DashboardLayout';
+import DashboardLayout from '@/components/HomeLayout';
 import { vehicleBrandRequestService, VehicleBrandRequest } from '@/lib/vehicleBrandRequestService';
 import { vehicleBrandService } from '@/lib/vehicleBrandService';
 import Notification from '@/components/Notification';
