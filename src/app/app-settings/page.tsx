@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useAppSettings } from '@/lib/useAppSettings';
 import DashboardLayout from '@/components/HomeLayout';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import Notification from '@/components/Notification';
 
 export default function AppSettingsPage() {
@@ -115,29 +116,34 @@ export default function AppSettingsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-        </div>
-      </DashboardLayout>
+      <ProtectedRoute permission="app-settings">
+        <DashboardLayout>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-red-600 text-center">
-            <h2 className="text-2xl font-bold mb-4">Error Loading Settings</h2>
-            <p>{error}</p>
+      <ProtectedRoute permission="app-settings">
+        <DashboardLayout>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-red-600 text-center">
+              <h2 className="text-2xl font-bold mb-4">Error Loading Settings</h2>
+              <p>{error}</p>
+            </div>
           </div>
-        </div>
-      </DashboardLayout>
+        </DashboardLayout>
+      </ProtectedRoute>
     );
   }
 
   return (
-    <DashboardLayout>
+    <ProtectedRoute permission="app-settings">
+      <DashboardLayout>
       <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">App Settings</h1>
@@ -321,5 +327,6 @@ export default function AppSettingsPage() {
         </form>
       </div>
     </DashboardLayout>
+    </ProtectedRoute>
   );
 } 

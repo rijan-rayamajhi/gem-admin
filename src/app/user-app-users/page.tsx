@@ -125,7 +125,7 @@ export default function UserAppUsersPage() {
   };
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute permission="users">
       <DashboardLayout>
         <div className="p-6">
           {/* Header */}

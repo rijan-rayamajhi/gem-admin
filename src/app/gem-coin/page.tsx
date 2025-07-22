@@ -87,7 +87,7 @@ export default function GemCoinPage() {
   const inactiveActions = actions.filter(action => !action.isActive).length;
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute permission="gem-coins">
       <DashboardLayout>
         <div className="space-y-6">
           {/* Header */}

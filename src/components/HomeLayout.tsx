@@ -4,18 +4,65 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
+import { useAuth } from '@/lib/auth-context';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface HomeLayoutProps {
   children: ReactNode;
 }
 
 export default function HomeLayout({ children }: HomeLayoutProps) {
+  const { user, teamMember, role } = useAuth();
+  const { isSuperAdmin } = usePermissions();
+
   const handleSignOut = async () => {
     try {
       await signOut(auth);
     } catch (error) {
       console.error('Error signing out:', error);
     }
+  };
+
+  // Helper function to get user display name
+  const getDisplayName = () => {
+    if (teamMember) {
+      return `${teamMember.firstName} ${teamMember.lastName}`;
+    }
+    // Super admin (not in team collection)
+    if (isSuperAdmin()) {
+      return user?.displayName || 'Super Admin';
+    }
+    return user?.displayName || 'User';
+  };
+
+  // Helper function to get user initials
+  const getUserInitials = () => {
+    if (teamMember) {
+      return `${teamMember.firstName.charAt(0)}${teamMember.lastName.charAt(0)}`;
+    }
+    // Super admin (not in team collection)
+    if (isSuperAdmin()) {
+      const name = user?.displayName || 'Super Admin';
+      return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2);
+    }
+    const name = user?.displayName || user?.email || 'U';
+    return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2);
+  };
+
+  // Helper function to get user email
+  const getUserEmail = () => {
+    return teamMember?.email || user?.email || '';
+  };
+
+  // Helper function to get role display
+  const getRoleDisplay = () => {
+    if (isSuperAdmin()) {
+      return 'Super Admin';
+    }
+    if (role) {
+      return role.charAt(0).toUpperCase() + role.slice(1);
+    }
+    return 'User';
   };
 
   return (
@@ -33,11 +80,14 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                   className="flex items-center space-x-3 p-2 rounded-xl hover:bg-[var(--color-background-secondary)] transition-all duration-200"
                 >
                   <div className="w-10 h-10 bg-[var(--color-primary-500)] rounded-xl flex items-center justify-center shadow-theme-sm">
-                    <span className="text-[var(--color-text-inverse)] text-sm font-medium">U</span>
+                    <span className="text-[var(--color-text-inverse)] text-sm font-medium">{getUserInitials()}</span>
                   </div>
                   <div className="hidden md:block">
-                    <p className="text-[var(--color-text-primary)] text-sm font-medium">Admin User</p>
-                    <p className="text-[var(--color-text-tertiary)] text-xs">admin@gem.com</p>
+                    <p className="text-[var(--color-text-primary)] text-sm font-medium">{getDisplayName()}</p>
+                    <p className="text-[var(--color-text-tertiary)] text-xs">{getUserEmail()}</p>
+                    {role && (
+                      <p className="text-[var(--color-text-tertiary)] text-xs">Role: {getRoleDisplay()}</p>
+                    )}
                   </div>
                 </Link>
 

@@ -12,10 +12,8 @@ interface EditTeamMemberModalProps {
 
 const roles = [
   { id: 'admin', name: 'Admin', description: 'Full access to all features and system settings', color: 'bg-red-100 text-red-800' },
-  { id: 'manager', name: 'Manager', description: 'Manage teams, projects, and oversee operations', color: 'bg-blue-100 text-blue-800' },
   { id: 'developer', name: 'Developer', description: 'Access to development tools and technical features', color: 'bg-green-100 text-green-800' },
-  { id: 'analyst', name: 'Analyst', description: 'View analytics, reports, and data insights', color: 'bg-purple-100 text-purple-800' },
-  { id: 'viewer', name: 'Viewer', description: 'Read-only access to view information', color: 'bg-gray-100 text-gray-800' },
+  { id: 'tester', name: 'Tester', description: 'Access to testing tools and quality assurance features', color: 'bg-blue-100 text-blue-800' },
 ];
 
 const departments = [
@@ -35,14 +33,11 @@ const departments = [
 ];
 
 const accessPermissions = [
-  { id: 'home', name: 'Home', description: 'Access to main home page and overview', icon: '📊' },
-  { id: 'team', name: 'Team Management', description: 'Manage team members and their roles', icon: '👥' },
-  { id: 'rewards', name: 'Flash Rewards', description: 'Manage promotional offers and discounts', icon: '🎁' },
-  { id: 'vehicles', name: 'Vehicle Brands', description: 'Manage vehicle brands and manufacturers', icon: '🚗' },
-  { id: 'analytics', name: 'Analytics', description: 'View analytics, reports, and insights', icon: '📈' },
-  { id: 'settings', name: 'Settings', description: 'Access to system settings and configuration', icon: '⚙️' },
-  { id: 'users', name: 'User Management', description: 'Manage user accounts and permissions', icon: '👤' },
-  { id: 'reports', name: 'Reports', description: 'Generate and view detailed reports', icon: '📋' },
+  { id: 'app-settings', name: 'App Settings', description: 'Configure application settings and preferences', icon: '⚙️' },
+  { id: 'gem-coins', name: 'Gem Coins', description: 'Manage coin values and reward actions', icon: '💎' },
+  { id: 'users', name: 'User', description: 'Manage user accounts and profiles', icon: '👤' },
+  { id: 'teams', name: 'Teams', description: 'Manage team members and their roles', icon: '👥' },
+  { id: 'caroseal-ads', name: 'Caroseal Ads', description: 'Manage carousel advertisements', icon: '🎯' },
 ];
 
 interface FormData {
@@ -64,7 +59,7 @@ export default function EditTeamMemberModal({ isOpen, onClose, onSuccess, teamMe
     firstName: '',
     lastName: '',
     phone: '',
-    role: 'viewer',
+    role: 'tester',
     department: '',
     position: '',
     startDate: '',

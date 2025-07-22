@@ -359,7 +359,7 @@ export default function CarosealAdsPage() {
   };
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute permission="caroseal-ads">
       <DashboardLayout>
         <div className="p-6">
           {/* Header */}
