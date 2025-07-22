@@ -12,7 +12,16 @@ export class TimestampUtils {
    */
   static toInputValue(timestamp: Timestamp): string {
     if (!timestamp) return '';
-    return timestamp.toDate().toISOString().slice(0, 16);
+    
+    // Convert to local time instead of UTC
+    const date = timestamp.toDate();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
   /**
@@ -22,7 +31,10 @@ export class TimestampUtils {
    */
   static fromInputValue(value: string): Timestamp {
     if (!value) return Timestamp.now();
-    return Timestamp.fromDate(new Date(value));
+    
+    // Parse as local time (datetime-local gives local time)
+    const date = new Date(value);
+    return Timestamp.fromDate(date);
   }
 
   /**
@@ -206,7 +218,7 @@ export class TimestampUtils {
   }
 
   /**
-   * Create a timestamp from current time plus specified minutes
+   * Get timestamp from now plus specified minutes, rounded to nearest 15-minute interval
    * Useful for setting default end times
    * @param minutes - Minutes to add to current time
    * @returns New timestamp
@@ -214,6 +226,13 @@ export class TimestampUtils {
   static fromNowPlusMinutes(minutes: number): Timestamp {
     const date = new Date();
     date.setMinutes(date.getMinutes() + minutes);
+    
+    // Round to nearest 15-minute interval for cleaner default times
+    const roundedMinutes = Math.round(date.getMinutes() / 15) * 15;
+    date.setMinutes(roundedMinutes);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+    
     return Timestamp.fromDate(date);
   }
 

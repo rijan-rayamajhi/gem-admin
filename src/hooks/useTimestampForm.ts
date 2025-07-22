@@ -11,8 +11,10 @@ export interface CarosealAdFormData {
   description: string;
   adImage: File | null;
   existingImageUrl?: string;
-  actionTypeType: 'website' | 'app_screen';
+  actionTypeType: 'website' | 'app_screen' | 'location';
   actionTypeValue: string;
+  actionTypeLatitude?: number;  // For location action type
+  actionTypeLongitude?: number; // For location action type
   locationType: 'specific' | 'pan_india';
   latitude?: number;
   longitude?: number;
@@ -50,6 +52,8 @@ export const useTimestampForm = (initialAd?: any, isEditing: boolean = false) =>
         existingImageUrl: initialAd.adImage || '',
         actionTypeType: initialAd.actionType?.type || 'website',
         actionTypeValue: initialAd.actionType?.value || '',
+        actionTypeLatitude: initialAd.actionType?.latitude,
+        actionTypeLongitude: initialAd.actionType?.longitude,
         locationType: initialAd.location?.type || 'pan_india',
         latitude: initialAd.location?.latitude,
         longitude: initialAd.location?.longitude,
@@ -68,12 +72,14 @@ export const useTimestampForm = (initialAd?: any, isEditing: boolean = false) =>
       existingImageUrl: undefined,
       actionTypeType: 'website',
       actionTypeValue: '',
+      actionTypeLatitude: undefined,
+      actionTypeLongitude: undefined,
       locationType: 'pan_india',
       latitude: undefined,
       longitude: undefined,
       radius: undefined,
-      startDate: Timestamp.now(),
-      endDate: TimestampUtils.fromNowPlusMinutes(60),
+      startDate: TimestampUtils.fromNowPlusMinutes(0), // Start now (rounded to 15-min interval)
+      endDate: TimestampUtils.fromNowPlusMinutes(60),  // End in 1 hour
     };
   };
 
@@ -143,6 +149,8 @@ export const useTimestampForm = (initialAd?: any, isEditing: boolean = false) =>
     if (!formData.actionTypeValue.trim()) {
       newErrors.actionTypeValue = formData.actionTypeType === 'website' 
         ? 'Website URL is required' 
+        : formData.actionTypeType === 'location'
+        ? 'Location name is required'
         : 'App screen name is required';
     }
 
@@ -150,6 +158,18 @@ export const useTimestampForm = (initialAd?: any, isEditing: boolean = false) =>
     if (formData.actionTypeType === 'website' && formData.actionTypeValue && 
         !/^https?:\/\//.test(formData.actionTypeValue)) {
       newErrors.actionTypeValue = 'Please enter a valid website URL (must start with http:// or https://)';
+    }
+
+    // Location coordinates validation for location type
+    if (formData.actionTypeType === 'location') {
+      if (!formData.actionTypeLatitude || !formData.actionTypeLongitude) {
+        newErrors.actionTypeValue = 'Latitude and longitude are required for location action type';
+      } else if (
+        formData.actionTypeLatitude < -90 || formData.actionTypeLatitude > 90 ||
+        formData.actionTypeLongitude < -180 || formData.actionTypeLongitude > 180
+      ) {
+        newErrors.actionTypeValue = 'Please enter valid coordinates (Latitude: -90 to 90, Longitude: -180 to 180)';
+      }
     }
 
     // Image validation (either new file or existing image for editing)
@@ -170,9 +190,13 @@ export const useTimestampForm = (initialAd?: any, isEditing: boolean = false) =>
       newErrors.dateRange = dateValidation.error;
     }
 
-    // Check if start date is in the past (optional business rule)
-    if (TimestampUtils.isPast(formData.startDate)) {
-      newErrors.startDate = 'Start date cannot be in the past';
+    // Check if start date is in the past (allow dates from today)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
+    const startDate = formData.startDate.toDate();
+    
+    if (startDate < today) {
+      newErrors.startDate = 'Start date cannot be before today';
     }
 
     setErrors(newErrors);
@@ -191,6 +215,21 @@ export const useTimestampForm = (initialAd?: any, isEditing: boolean = false) =>
    * Get form data prepared for submission (no conversion needed!)
    */
   const getSubmissionData = useCallback(() => {
+    // Prepare action type object based on type
+    let actionTypeObj: any = {
+      type: formData.actionTypeType,
+      value: formData.actionTypeValue,
+    };
+
+    // Add coordinates for location type
+    if (formData.actionTypeType === 'location') {
+      actionTypeObj = {
+        ...actionTypeObj,
+        latitude: formData.actionTypeLatitude,
+        longitude: formData.actionTypeLongitude,
+      };
+    }
+
     // Since we're using Timestamps throughout, no conversion is needed
     return {
       ...formData,
@@ -204,10 +243,7 @@ export const useTimestampForm = (initialAd?: any, isEditing: boolean = false) =>
         type: formData.locationType,
       },
       // Action type object
-      actionType: {
-        type: formData.actionTypeType,
-        value: formData.actionTypeValue,
-      },
+      actionType: actionTypeObj,
     };
   }, [formData]);
 

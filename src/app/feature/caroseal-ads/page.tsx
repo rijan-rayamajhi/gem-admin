@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardLayout from '@/components/DashboardLayout';
+import DashboardLayout from '@/components/HomeLayout';
 import Notification from '@/components/Notification';
 import AddCarosealAdModal from '@/components/AddCarosealAdModal';
 import { carosealAdService, CarosealAd } from '@/lib/carosealAdService';
@@ -15,8 +15,10 @@ interface CarosealAdFormData {
   adImage?: File | string;
   existingImageUrl?: string;
   actionType: {
-    type: 'website' | 'app_screen';
+    type: 'website' | 'app_screen' | 'location';
     value: string;
+    latitude?: number;  // For location type
+    longitude?: number; // For location type
   };
   location: {
     type: 'specific' | 'pan_india';
@@ -49,6 +51,7 @@ export default function CarosealAdsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedAd, setSelectedAd] = useState<CarosealAd | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [statusChangeLoading, setStatusChangeLoading] = useState<string | null>(null);
 
   // Load ads from Firebase
   useEffect(() => {
@@ -231,6 +234,107 @@ export default function CarosealAdsPage() {
     }
   };
 
+  // Status change handler
+  const handleStatusChange = async (adId: string, newStatus: CarosealAd['status']) => {
+    setStatusChangeLoading(adId);
+    try {
+      await carosealAdService.updateAdStatus(adId, newStatus);
+      const fetchedAds = await carosealAdService.getAds();
+      setAds(fetchedAds);
+      
+      setNotification({
+        type: 'success',
+        message: `Ad status updated to ${newStatus}!`,
+        isVisible: true,
+      });
+    } catch (error) {
+      console.error('Error updating ad status:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to update ad status',
+        isVisible: true,
+      });
+    } finally {
+      setStatusChangeLoading(null);
+    }
+  };
+
+  // Sync status handler - updates database status to match computed status
+  const handleSyncStatus = async (ad: CarosealAd) => {
+    const computedStatus = getComputedAdStatus(ad);
+    if (computedStatus === ad.status) {
+      setNotification({
+        type: 'error',
+        message: 'Status is already synchronized',
+        isVisible: true,
+      });
+      return;
+    }
+    
+    // Map computed status to database status
+    let newDatabaseStatus: CarosealAd['status'];
+    if (computedStatus === 'upcoming') {
+      newDatabaseStatus = 'active'; // Keep as active for upcoming ads
+    } else {
+      newDatabaseStatus = computedStatus as CarosealAd['status']; // active -> active, expired -> expired
+    }
+    
+    await handleStatusChange(ad.id!, newDatabaseStatus);
+  };
+
+  // Bulk sync all out-of-sync ads
+  const handleBulkSyncStatus = async () => {
+    setActionLoading(true);
+    try {
+      const outOfSyncAds = ads.filter(ad => {
+        const computedStatus = getComputedAdStatus(ad);
+        return computedStatus !== ad.status;
+      });
+
+      if (outOfSyncAds.length === 0) {
+        setNotification({
+          type: 'error',
+          message: 'All ads are already synchronized',
+          isVisible: true,
+        });
+        return;
+      }
+
+      // Update all out-of-sync ads
+      const updatePromises = outOfSyncAds.map(async (ad) => {
+        const computedStatus = getComputedAdStatus(ad);
+        let newDatabaseStatus: CarosealAd['status'];
+        if (computedStatus === 'upcoming') {
+          newDatabaseStatus = 'active';
+        } else {
+          newDatabaseStatus = computedStatus as CarosealAd['status'];
+        }
+        return carosealAdService.updateAdStatus(ad.id!, newDatabaseStatus);
+      });
+
+      await Promise.all(updatePromises);
+      
+      // Reload ads
+      const fetchedAds = await carosealAdService.getAds();
+      setAds(fetchedAds);
+      
+      setNotification({
+        type: 'success',
+        message: `Successfully synchronized ${outOfSyncAds.length} ads!`,
+        isVisible: true,
+      });
+    } catch (error) {
+      console.error('Error bulk syncing ad statuses:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to sync ad statuses',
+        isVisible: true,
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   /**
    * Get computed ad status based on current time and Timestamps
    */
@@ -306,6 +410,17 @@ export default function CarosealAdsPage() {
                     Add New Ad
                   </button>
                 </div>
+                {/* Bulk Sync Button */}
+                <div>
+                  <button
+                    onClick={handleBulkSyncStatus}
+                    disabled={actionLoading || ads.filter(ad => getComputedAdStatus(ad) !== ad.status).length === 0}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Sync all out-of-sync ad statuses"
+                  >
+                    {actionLoading ? 'Syncing...' : `Sync Status (${ads.filter(ad => getComputedAdStatus(ad) !== ad.status).length})`}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -342,10 +457,13 @@ export default function CarosealAdsPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ad Details
+                        Image
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Action
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Description
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
@@ -366,60 +484,96 @@ export default function CarosealAdsPage() {
                       const computedStatus = getComputedAdStatus(ad);
                       return (
                         <tr key={ad.id} className="hover:bg-gray-50">
+                          {/* Image Column */}
                           <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-12 w-12">
-                                {ad.adImage ? (
-                                  <div className="h-12 w-12 rounded-lg overflow-hidden border border-gray-200">
-                                    <img
-                                      src={ad.adImage}
-                                      alt="Ad"
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zNSAzNUg2NVY2NUgzNVYzNVoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTQwIDQwSDYwVjYwSDQwVjQwWiIgZmlsbD0iI0QxRDVEMyIvPgo8L3N2Zz4K';
-                                      }}
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {ad.title}
+                            <div className="flex-shrink-0 h-16 w-16">
+                              {ad.adImage ? (
+                                <div className="h-16 w-16 rounded-lg overflow-hidden border border-gray-200">
+                                  <img
+                                    src={ad.adImage}
+                                    alt="Ad"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zNSAzNUg2NVY2NUgzNVYzNVoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTQwIDQwSDYwVjYwSDQwVjQwWiIgZmlsbD0iI0QxRDVEMyIvPgo8L3N2Zz4K';
+                                    }}
+                                  />
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                  {ad.description && ad.description.length > 60
-                                    ? `${ad.description.substring(0, 60)}...`
-                                    : ad.description}
+                              ) : (
+                                <div className="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center">
+                                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
                                 </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 underline">
-                            <a href={ad.actionType.value} target="_blank" rel="noopener noreferrer">
-                              {ad.actionType.type === 'website'
-                                ? ad.actionType.value
-                                : ad.actionType.value || 'App Screen'}
-                            </a>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-col space-y-1">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(ad.status)}`}>
-                                {ad.status.charAt(0).toUpperCase() + ad.status.slice(1)}
-                              </span>
-                              {computedStatus !== ad.status && (
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(computedStatus)}`}>
-                                  {computedStatus.charAt(0).toUpperCase() + computedStatus.slice(1)}
-                                </span>
                               )}
                             </div>
                           </td>
+                          
+                          {/* Name Column */}
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {ad.title}
+                            </div>
+                          </td>
+                          
+                          {/* Description Column */}
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-500 max-w-xs">
+                              {ad.description && ad.description.length > 100
+                                ? `${ad.description.substring(0, 100)}...`
+                                : ad.description}
+                            </div>
+                          </td>
+                          
+                          {/* Status Column */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-col space-y-2">
+                              {/* Database Status with Dropdown */}
+                              <div className="flex items-center space-x-2">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(ad.status)}`}>
+                                  {ad.status.charAt(0).toUpperCase() + ad.status.slice(1)}
+                                </span>
+                                <select
+                                  value={ad.status}
+                                  onChange={(e) => handleStatusChange(ad.id!, e.target.value as CarosealAd['status'])}
+                                  disabled={statusChangeLoading === ad.id}
+                                  className="text-xs border border-gray-300 rounded px-1 py-0.5 bg-white focus:ring-1 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                                >
+                                  <option value="active">Active</option>
+                                  <option value="inactive">Inactive</option>
+                                  <option value="expired">Expired</option>
+                                </select>
+                              </div>
+                              
+                              {/* Computed Status (if different) */}
+                              {computedStatus !== ad.status && (
+                                <div className="flex items-center space-x-1">
+                                  <span className="text-xs text-gray-500">Real-time:</span>
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(computedStatus)}`}>
+                                    {computedStatus.charAt(0).toUpperCase() + computedStatus.slice(1)}
+                                  </span>
+                                  <button
+                                    onClick={() => handleSyncStatus(ad)}
+                                    disabled={statusChangeLoading === ad.id}
+                                    className="ml-1 px-1 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50 transition-colors"
+                                    title="Sync database status with real-time status"
+                                  >
+                                    Sync
+                                  </button>
+                                </div>
+                              )}
+                              
+                              {/* Loading indicator */}
+                              {statusChangeLoading === ad.id && (
+                                <div className="text-xs text-blue-600 flex items-center space-x-1">
+                                  <div className="animate-spin rounded-full h-3 w-3 border border-blue-600 border-t-transparent"></div>
+                                  <span>Updating...</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          
+                          {/* Schedule Column */}
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="space-y-1">
                               <div>Start: {TimestampUtils.toDisplayString(ad.startDate, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
@@ -429,9 +583,13 @@ export default function CarosealAdsPage() {
                               </div>
                             </div>
                           </td>
+                          
+                          {/* Created Column */}
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {TimestampUtils.toDisplayString(ad.createdAt, { month: 'short', day: 'numeric' })}
                           </td>
+                          
+                          {/* Actions Column */}
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
                               <button
@@ -509,6 +667,7 @@ export default function CarosealAdsPage() {
           isOpen={viewModalOpen && !!selectedAd}
           onClose={() => { setViewModalOpen(false); setSelectedAd(null); }}
           ad={selectedAd as CarosealAd}
+          onStatusChange={handleStatusChange}
         />
 
         {/* Delete Confirmation Modal */}

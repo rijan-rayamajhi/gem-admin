@@ -256,6 +256,20 @@ export default function AddCarosealAdModal({
                 />
                 <span className="ml-2">App Screen</span>
               </label>
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  checked={formData.actionTypeType === 'location'}
+                  onChange={() => {
+                    updateFormField('actionTypeType', 'location');
+                    updateFormField('actionTypeValue', '');
+                    updateFormField('actionTypeLatitude', undefined);
+                    updateFormField('actionTypeLongitude', undefined);
+                  }}
+                  className="form-radio text-blue-600"
+                />
+                <span className="ml-2">Location</span>
+              </label>
             </div>
 
             {formData.actionTypeType === 'website' ? (
@@ -268,7 +282,7 @@ export default function AddCarosealAdModal({
                 }`}
                 placeholder="Enter website URL (e.g. https://example.com)"
               />
-            ) : (
+            ) : formData.actionTypeType === 'app_screen' ? (
               <select
                 value={formData.actionTypeValue}
                 onChange={(e) => updateFormField('actionTypeValue', e.target.value)}
@@ -281,13 +295,60 @@ export default function AddCarosealAdModal({
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
+            ) : (
+              // Location action type fields
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location Name *</label>
+                  <input
+                    type="text"
+                    value={formData.actionTypeValue}
+                    onChange={(e) => updateFormField('actionTypeValue', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.actionTypeValue ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter location name (e.g. Central Park, Times Square)"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={formData.actionTypeLatitude || ''}
+                      onChange={(e) => updateFormField('actionTypeLatitude', parseFloat(e.target.value) || undefined)}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        errors.actionTypeValue ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="40.7128"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Longitude *</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={formData.actionTypeLongitude || ''}
+                      onChange={(e) => updateFormField('actionTypeLongitude', parseFloat(e.target.value) || undefined)}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        errors.actionTypeValue ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="-74.0060"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Specify the exact coordinates where users should be directed. You can find coordinates using Google Maps.
+                </p>
+              </div>
             )}
             {errors.actionTypeValue && <p className="text-red-500 text-sm mt-1">{errors.actionTypeValue}</p>}
           </div>
 
           {/* Location */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Location *</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Location Visibility *</h3>
             <div className="flex items-center mb-2 gap-4">
               <label className="inline-flex items-center">
                 <input

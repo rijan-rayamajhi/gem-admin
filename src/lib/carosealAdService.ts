@@ -10,8 +10,10 @@ export interface CarosealAd {
   description: string;
   adImage: string; // Firebase Storage URL
   actionType: {
-    type: 'website' | 'app_screen';
+    type: 'website' | 'app_screen' | 'location';
     value: string;
+    latitude?: number;  // For location type
+    longitude?: number; // For location type
   };
   location: {
     type: 'specific' | 'pan_india';
@@ -210,6 +212,28 @@ class CarosealAdService {
     } catch (error) {
       console.error('Error deleting ad:', error);
       throw new Error('Failed to delete ad');
+    }
+  }
+
+  /**
+   * Manually update ad status
+   */
+  async updateAdStatus(adId: string, newStatus: CarosealAd['status']): Promise<void> {
+    try {
+      const adRef = doc(db, this.collectionName, adId);
+      const adDoc = await getDoc(adRef);
+      
+      if (!adDoc.exists()) {
+        throw new Error('Ad not found');
+      }
+
+      await updateDoc(adRef, {
+        status: newStatus,
+        updatedAt: Timestamp.now(),
+      });
+    } catch (error) {
+      console.error('Error updating ad status:', error);
+      throw new Error('Failed to update ad status');
     }
   }
 

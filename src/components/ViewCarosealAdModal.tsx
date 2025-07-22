@@ -2,20 +2,38 @@
 
 import { CarosealAd } from '@/lib/carosealAdService';
 import { TimestampUtils } from '@/lib/timestampUtils';
+import { useState } from 'react';
 
 interface ViewCarosealAdModalProps {
   isOpen: boolean;
   onClose: () => void;
-  ad: CarosealAd;
+  ad: CarosealAd | null;
+  onStatusChange?: (adId: string, newStatus: CarosealAd['status']) => Promise<void>;
 }
 
-export default function ViewCarosealAdModal({ isOpen, onClose, ad }: ViewCarosealAdModalProps) {
+export default function ViewCarosealAdModal({ isOpen, onClose, ad, onStatusChange }: ViewCarosealAdModalProps) {
+  const [statusChangeLoading, setStatusChangeLoading] = useState(false);
+  
   if (!isOpen || !ad) return null;
 
   // Get computed status and display information
   const computedStatus = TimestampUtils.getAdStatus(ad.startDate, ad.endDate);
   const duration = TimestampUtils.daysBetween(ad.startDate, ad.endDate);
   const isCurrentlyActive = TimestampUtils.isActive(ad.startDate, ad.endDate);
+
+  // Handle status change in modal
+  const handleStatusChange = async (newStatus: CarosealAd['status']) => {
+    if (!onStatusChange || !ad.id) return;
+    
+    setStatusChangeLoading(true);
+    try {
+      await onStatusChange(ad.id, newStatus);
+    } catch (error) {
+      console.error('Error updating status:', error);
+    } finally {
+      setStatusChangeLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -39,25 +57,52 @@ export default function ViewCarosealAdModal({ isOpen, onClose, ad }: ViewCarosea
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">{ad.title}</h1>
-              <div className="flex items-center space-x-3">
-                {/* Database Status */}
-                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                  ad.status === 'active' ? 'bg-green-100 text-green-800' : 
-                  ad.status === 'expired' ? 'bg-red-100 text-red-800' : 
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {ad.status.charAt(0).toUpperCase() + ad.status.slice(1)}
-                </span>
+              <div className="flex items-center space-x-3 flex-wrap">
+                {/* Database Status with Dropdown */}
+                <div className="flex items-center space-x-2">
+                  <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                    ad.status === 'active' ? 'bg-green-100 text-green-800' : 
+                    ad.status === 'expired' ? 'bg-red-100 text-red-800' : 
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {ad.status.charAt(0).toUpperCase() + ad.status.slice(1)}
+                  </span>
+                  
+                  {/* Status Change Dropdown */}
+                  {onStatusChange && (
+                    <select
+                      value={ad.status}
+                      onChange={(e) => handleStatusChange(e.target.value as CarosealAd['status'])}
+                      disabled={statusChangeLoading}
+                      className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                    >
+                      <option value="active">Set Active</option>
+                      <option value="inactive">Set Inactive</option>
+                      <option value="expired">Set Expired</option>
+                    </select>
+                  )}
+                  
+                  {/* Loading indicator */}
+                  {statusChangeLoading && (
+                    <div className="flex items-center space-x-1 text-blue-600">
+                      <div className="animate-spin rounded-full h-4 w-4 border border-blue-600 border-t-transparent"></div>
+                      <span className="text-sm">Updating...</span>
+                    </div>
+                  )}
+                </div>
                 
                 {/* Computed Status (if different) */}
                 {computedStatus !== ad.status && (
-                  <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                    computedStatus === 'active' ? 'bg-blue-100 text-blue-800' : 
-                    computedStatus === 'expired' ? 'bg-orange-100 text-orange-800' : 
-                    'bg-purple-100 text-purple-800'
-                  }`}>
-                    Currently {computedStatus.charAt(0).toUpperCase() + computedStatus.slice(1)}
-                  </span>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-sm text-gray-500">Real-time:</span>
+                    <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                      computedStatus === 'active' ? 'bg-blue-100 text-blue-800' : 
+                      computedStatus === 'expired' ? 'bg-orange-100 text-orange-800' : 
+                      'bg-purple-100 text-purple-800'
+                    }`}>
+                      {computedStatus.charAt(0).toUpperCase() + computedStatus.slice(1)}
+                    </span>
+                  </div>
                 )}
 
                 {/* Live indicator for currently active ads */}
@@ -122,9 +167,9 @@ export default function ViewCarosealAdModal({ isOpen, onClose, ad }: ViewCarosea
               </div>
             </div>
 
-            {/* Action & Location Details */}
+            {/* Action Details */}
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Target & Location</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Action Details</h3>
               <div className="space-y-3">
                 <div>
                   <span className="text-sm font-medium text-gray-600">Action Type:</span>
@@ -134,23 +179,65 @@ export default function ViewCarosealAdModal({ isOpen, onClose, ad }: ViewCarosea
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-600">
-                    {ad.actionType.type === 'website' ? 'Website URL:' : 'App Screen:'}
+                    {ad.actionType.type === 'website' ? 'Website URL:' : 
+                     ad.actionType.type === 'location' ? 'Location:' : 'App Screen:'}
                   </span>
                   {ad.actionType.type === 'website' ? (
                     <a 
                       href={ad.actionType.value} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="text-blue-600 underline hover:text-blue-800 block break-all"
+                      className="text-blue-600 hover:text-blue-800 underline block"
                     >
                       {ad.actionType.value}
                     </a>
+                  ) : ad.actionType.type === 'location' ? (
+                    <div className="space-y-2">
+                      <p className="text-gray-900 font-medium">{ad.actionType.value}</p>
+                      <div className="text-sm text-gray-600">
+                        <p>Latitude: {ad.actionType.latitude}</p>
+                        <p>Longitude: {ad.actionType.longitude}</p>
+                      </div>
+                      <div className="flex space-x-2 mt-2">
+                        <a
+                          href={`https://www.google.com/maps?q=${ad.actionType.latitude},${ad.actionType.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                        >
+                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          Open in Google Maps
+                        </a>
+                        <a
+                          href={`https://maps.apple.com/?q=${ad.actionType.latitude},${ad.actionType.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                        >
+                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          Open in Apple Maps
+                        </a>
+                      </div>
+                    </div>
                   ) : (
                     <p className="text-gray-900">{ad.actionType.value}</p>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* Location Targeting Details */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Location Visibility</h3>
+              <div className="space-y-3">
                 <div>
-                  <span className="text-sm font-medium text-gray-600">Location Targeting:</span>
+                  <span className="text-sm font-medium text-gray-600">Targeting Type:</span>
                   <p className="text-gray-900 capitalize">
                     {ad.location.type.replace('_', ' ')}
                   </p>
