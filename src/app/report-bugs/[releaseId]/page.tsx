@@ -32,6 +32,11 @@ export default function ReleaseBugsPage() {
   const [reportType, setReportType] = useState("Bug");
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [testCases, setTestCases] = useState<string>("");
+  const [releaseBugs, setReleaseBugs] = useState<string>("");
+  const [releaseModel, setReleaseModel] = useState<string>("");
+  const [releaseStatus, setReleaseStatus] = useState<string>("");
+  const [releasePublished, setReleasePublished] = useState<string>("");
 
   useEffect(() => {
     const fetchBugs = async () => {
@@ -66,13 +71,22 @@ export default function ReleaseBugsPage() {
       }
     };
     const fetchRelease = async () => {
-      // Optionally fetch release version for header
       try {
         const snapshot = await getDocs(query(collection(db, 'apk_uploads')));
         const doc = snapshot.docs.find(d => d.id === releaseId);
         setReleaseVersion(doc?.data().version || releaseId);
+        setTestCases(doc?.data().testCases || "");
+        setReleaseBugs(doc?.data().bugs || "");
+        setReleaseModel(doc?.data().module || "");
+        setReleaseStatus(doc?.data().status || "");
+        setReleasePublished(doc?.data().publishDate || "");
       } catch {
         setReleaseVersion(releaseId);
+        setTestCases("");
+        setReleaseBugs("");
+        setReleaseModel("");
+        setReleaseStatus("");
+        setReleasePublished("");
       }
     };
     if (releaseId) {
@@ -184,6 +198,22 @@ export default function ReleaseBugsPage() {
           </div>
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Bugs for Release: {releaseVersion}</h1>
+            {(testCases || releaseBugs) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {testCases && (
+                  <div className="bg-gray-50 rounded-lg shadow p-4 border border-gray-200">
+                    <h2 className="text-lg font-semibold mb-2 text-gray-800">Test Cases</h2>
+                    <pre className="whitespace-pre-wrap text-gray-700">{testCases}</pre>
+                  </div>
+                )}
+                {releaseBugs && (
+                  <div className="bg-gray-50 rounded-lg shadow p-4 border border-gray-200">
+                    <h2 className="text-lg font-semibold mb-2 text-gray-800">Bugs (from QA)</h2>
+                    <pre className="whitespace-pre-wrap text-gray-700">{releaseBugs}</pre>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div className="bg-white rounded-lg shadow border border-gray-200">
             {loading ? (
@@ -218,16 +248,14 @@ export default function ReleaseBugsPage() {
                         <td className="px-6 py-4 text-sm text-blue-600 underline">
                           {bug.recording ? <a href={bug.recording} target="_blank" rel="noopener noreferrer">View</a> : '—'}
                         </td>
-                        {/* Module */}
-                        <td className="px-6 py-4 text-sm text-gray-900">{bug.module || '—'}</td>
-                        {/* Status */}
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {bug.status === 'open' ? 'open' : bug.status === 'valid' ? 'valid' : bug.status === 'invalid' ? 'invalid' : bug.status}
-                        </td>
+                        {/* Module (from release) */}
+                        <td className="px-6 py-4 text-sm text-gray-900">{releaseModel || '—'}</td>
+                        {/* Status (from release) */}
+                        <td className="px-6 py-4 text-sm text-gray-900">{releaseStatus || '—'}</td>
                         {/* Fixed */}
-                        <td className="px-6 py-4 text-sm text-gray-900">{bug.fixed || '—'}</td>
-                        {/* Published date */}
-                        <td className="px-6 py-4 text-sm text-gray-900">{bug.published || '—'}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{bug.fixed ? 'Yes' : 'No'}</td>
+                        {/* Published date (from release) */}
+                        <td className="px-6 py-4 text-sm text-gray-900">{releasePublished || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

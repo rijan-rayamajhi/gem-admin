@@ -387,9 +387,7 @@ export default function VehicleBrandsPage() {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           name: model,
         })),
-        vehicleType: request.vehicleType === 'Two Wheeler' ? 'two_wheeler' : 
-                    request.vehicleType === 'Four Wheeler' ? 'four_wheeler' :
-                    request.vehicleType === 'Two Wheeler Electric' ? 'two_wheeler_electric' : 'four_wheeler_electric',
+        vehicleType: request.vehicleType,
         logoUrl: request.imageUrl || '',
       });
 

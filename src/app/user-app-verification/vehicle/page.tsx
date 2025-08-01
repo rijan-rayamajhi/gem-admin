@@ -5,109 +5,15 @@ import { useAuth } from '@/lib/auth-context';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DashboardLayout from '@/components/HomeLayout';
 import Notification from '@/components/Notification';
+import { vehicleVerificationService, VehicleVerification } from '@/lib/vehicleVerificationService';
 
-interface VehicleVerification {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  vehicleNumber: string;
-  vehicleType: string;
-  brand: string;
-  model: string;
-  year: string;
-  registrationAuthority: string;
-  registrationDate: string;
-  expiryDate: string;
-  status: 'pending' | 'approved' | 'rejected' | 'expired';
-  documentUrl: string;
-  submittedAt: string;
-  verifiedAt?: string;
-  verifiedBy?: string;
-  notes?: string;
-}
 
-const mockVehicleVerifications: VehicleVerification[] = [
-  {
-    id: '1',
-    userId: 'user123',
-    userName: 'John Doe',
-    userEmail: 'john.doe@example.com',
-    vehicleNumber: 'ABC123456',
-    vehicleType: 'Motorcycle',
-    brand: 'Honda',
-    model: 'CBR 600RR',
-    year: '2022',
-    registrationAuthority: 'Department of Motor Vehicles',
-    registrationDate: '2022-03-15',
-    expiryDate: '2027-03-15',
-    status: 'pending',
-    documentUrl: '/sample-vehicle.jpg',
-    submittedAt: '2024-01-15T10:30:00Z',
-  },
-  {
-    id: '2',
-    userId: 'user456',
-    userName: 'Jane Smith',
-    userEmail: 'jane.smith@example.com',
-    vehicleNumber: 'XYZ789012',
-    vehicleType: 'Car',
-    brand: 'Toyota',
-    model: 'Camry',
-    year: '2021',
-    registrationAuthority: 'Department of Motor Vehicles',
-    registrationDate: '2021-08-20',
-    expiryDate: '2026-08-20',
-    status: 'approved',
-    documentUrl: '/sample-vehicle.jpg',
-    submittedAt: '2024-01-10T14:20:00Z',
-    verifiedAt: '2024-01-12T09:15:00Z',
-    verifiedBy: 'admin@gem.com',
-  },
-  {
-    id: '3',
-    userId: 'user789',
-    userName: 'Mike Johnson',
-    userEmail: 'mike.johnson@example.com',
-    vehicleNumber: 'DEF345678',
-    vehicleType: 'Motorcycle',
-    brand: 'Yamaha',
-    model: 'YZF R1',
-    year: '2023',
-    registrationAuthority: 'Department of Motor Vehicles',
-    registrationDate: '2023-01-10',
-    expiryDate: '2028-01-10',
-    status: 'rejected',
-    documentUrl: '/sample-vehicle.jpg',
-    submittedAt: '2024-01-08T16:45:00Z',
-    verifiedAt: '2024-01-09T11:30:00Z',
-    verifiedBy: 'admin@gem.com',
-    notes: 'Registration document is not clearly visible, please resubmit',
-  },
-  {
-    id: '4',
-    userId: 'user101',
-    userName: 'Sarah Wilson',
-    userEmail: 'sarah.wilson@example.com',
-    vehicleNumber: 'GHI901234',
-    vehicleType: 'Car',
-    brand: 'BMW',
-    model: 'X5',
-    year: '2020',
-    registrationAuthority: 'Department of Motor Vehicles',
-    registrationDate: '2020-05-05',
-    expiryDate: '2025-05-05',
-    status: 'expired',
-    documentUrl: '/sample-vehicle.jpg',
-    submittedAt: '2024-01-05T12:00:00Z',
-  },
-];
 
 export default function VehicleVerificationPage() {
   const { user } = useAuth();
-  const [verifications, setVerifications] = useState<VehicleVerification[]>(mockVehicleVerifications);
-  const [filteredVerifications, setFilteredVerifications] = useState<VehicleVerification[]>(mockVehicleVerifications);
-  const [loading, setLoading] = useState(false);
+  const [verifications, setVerifications] = useState<VehicleVerification[]>([]);
+  const [filteredVerifications, setFilteredVerifications] = useState<VehicleVerification[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all');
@@ -118,19 +24,31 @@ export default function VehicleVerificationPage() {
     isVisible: boolean;
   } | null>(null);
 
+  // Load vehicle verifications on component mount
+  useEffect(() => {
+    loadVehicleVerifications();
+  }, []);
+
   // Filter verifications based on search and filters
   useEffect(() => {
     let filtered = verifications;
 
     // Search filter
     if (searchTerm.trim()) {
-      filtered = filtered.filter((verification) =>
-        verification.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        verification.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        verification.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        verification.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        verification.model.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter((verification) => {
+        const userName = (verification.userName || '').toLowerCase();
+        const userEmail = (verification.userEmail || '').toLowerCase();
+        const vehicleNumber = (verification.vehicleNumber || '').toLowerCase();
+        const brand = (verification.brand || '').toLowerCase();
+        const model = (verification.model || '').toLowerCase();
+        
+        return userName.includes(searchLower) ||
+               userEmail.includes(searchLower) ||
+               vehicleNumber.includes(searchLower) ||
+               brand.includes(searchLower) ||
+               model.includes(searchLower);
+      });
     }
 
     // Status filter
@@ -140,23 +58,56 @@ export default function VehicleVerificationPage() {
 
     // Vehicle type filter
     if (vehicleTypeFilter !== 'all') {
-      filtered = filtered.filter((verification) => verification.vehicleType === vehicleTypeFilter);
+      filtered = filtered.filter((verification) => {
+        const vehicleType = verification.vehicleType || '';
+        // Handle both formatted and raw vehicle types
+        if (vehicleTypeFilter === 'Two Wheeler') {
+          return vehicleType === 'two_wheeler' || vehicleType === 'Motorcycle';
+        } else if (vehicleTypeFilter === 'Four Wheeler') {
+          return vehicleType === 'four_wheeler' || vehicleType === 'Car';
+        } else if (vehicleTypeFilter === 'Two Wheeler Electric') {
+          return vehicleType === 'two_wheeler_electric';
+        } else if (vehicleTypeFilter === 'Four Wheeler Electric') {
+          return vehicleType === 'four_wheeler_electric';
+        }
+        return vehicleType === vehicleTypeFilter;
+      });
     }
 
     // Brand filter
     if (brandFilter !== 'all') {
-      filtered = filtered.filter((verification) => verification.brand === brandFilter);
+      filtered = filtered.filter((verification) => {
+        const brand = verification.brand || '';
+        return brand.toLowerCase() === brandFilter.toLowerCase();
+      });
     }
 
     setFilteredVerifications(filtered);
   }, [searchTerm, statusFilter, vehicleTypeFilter, brandFilter, verifications]);
 
+  const loadVehicleVerifications = async () => {
+    try {
+      setLoading(true);
+      const data = await vehicleVerificationService.getVehicleVerifications();
+      setVerifications(data);
+    } catch (error) {
+      console.error('Error loading vehicle verifications:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to load vehicle verifications',
+        isVisible: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
+      notVerified: 'bg-gray-100 text-gray-800',
       approved: 'bg-green-100 text-green-800',
+      pending: 'bg-yellow-100 text-yellow-800',
       rejected: 'bg-red-100 text-red-800',
-      expired: 'bg-gray-100 text-gray-800',
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -165,9 +116,24 @@ export default function VehicleVerificationPage() {
     const colors = {
       Motorcycle: 'bg-blue-100 text-blue-800',
       Car: 'bg-green-100 text-green-800',
-      Truck: 'bg-purple-100 text-purple-800',
+      two_wheeler: 'bg-blue-100 text-blue-800',
+      four_wheeler: 'bg-green-100 text-green-800',
+      two_wheeler_electric: 'bg-cyan-100 text-cyan-800',
+      four_wheeler_electric: 'bg-emerald-100 text-emerald-800',
     };
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const formatVehicleType = (type: string) => {
+    const typeMap: { [key: string]: string } = {
+      'two_wheeler': 'Two Wheeler',
+      'four_wheeler': 'Four Wheeler',
+      'two_wheeler_electric': 'Two Wheeler Electric',
+      'four_wheeler_electric': 'Four Wheeler Electric',
+      'Motorcycle': 'Motorcycle',
+      'Car': 'Car',
+    };
+    return typeMap[type] || type;
   };
 
   const formatDate = (dateString: string) => {
@@ -178,22 +144,21 @@ export default function VehicleVerificationPage() {
     });
   };
 
-  const handleStatusUpdate = async (verificationId: string, newStatus: 'approved' | 'rejected', notes?: string) => {
+  const handleStatusUpdate = async (verification: VehicleVerification, newStatus: 'approved' | 'rejected', notes?: string) => {
     try {
       setLoading(true);
       
-      // Update the verification status
-      setVerifications(prev => prev.map(verification => 
-        verification.id === verificationId 
-          ? {
-              ...verification,
-              status: newStatus,
-              verifiedAt: new Date().toISOString(),
-              verifiedBy: user?.email || 'admin',
-              notes: notes || verification.notes
-            }
-          : verification
-      ));
+      // Update the verification status in Firebase
+      await vehicleVerificationService.updateVehicleStatus(
+        verification.userId,
+        verification.id,
+        newStatus,
+        user?.email || 'admin',
+        notes
+      );
+
+      // Reload the data to get the updated information
+      await loadVehicleVerifications();
 
       setNotification({
         type: 'success',
@@ -214,16 +179,30 @@ export default function VehicleVerificationPage() {
 
   const getStats = () => {
     const total = verifications.length;
-    const pending = verifications.filter(v => v.status === 'pending').length;
+    const notVerified = verifications.filter(v => v.status === 'notVerified').length;
     const approved = verifications.filter(v => v.status === 'approved').length;
+    const pending = verifications.filter(v => v.status === 'pending').length;
     const rejected = verifications.filter(v => v.status === 'rejected').length;
-    const expired = verifications.filter(v => v.status === 'expired').length;
 
-    return { total, pending, approved, rejected, expired };
+    return { total, notVerified, approved, pending, rejected };
   };
 
   const getUniqueBrands = () => {
-    return [...new Set(verifications.map(v => v.brand))];
+    const brands = verifications
+      .map(v => v.brand)
+      .filter(brand => brand && brand.trim() !== '') // Filter out null, undefined, and empty strings
+      .map(brand => brand.trim()); // Trim whitespace
+    
+    return [...new Set(brands)].sort(); // Remove duplicates and sort alphabetically
+  };
+
+  const getUniqueVehicleTypes = () => {
+    const types = verifications
+      .map(v => v.vehicleType)
+      .filter(type => type && type.trim() !== '') // Filter out null, undefined, and empty strings
+      .map(type => formatVehicleType(type)); // Format the vehicle type
+    
+    return [...new Set(types)].sort(); // Remove duplicates and sort alphabetically
   };
 
   const stats = getStats();
@@ -273,6 +252,20 @@ export default function VehicleVerificationPage() {
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
+                <div className="p-3 rounded-full bg-gray-100">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Not Verified</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.notVerified}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
                 <div className="p-3 rounded-full bg-green-100">
                   <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -299,23 +292,25 @@ export default function VehicleVerificationPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-gray-100">
-                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Expired</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.expired}</p>
-                </div>
-              </div>
-            </div>
+
           </div>
 
           {/* Filters */}
           <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Filters</h3>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('all');
+                  setVehicleTypeFilter('all');
+                  setBrandFilter('all');
+                }}
+                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Clear All Filters
+              </button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
@@ -335,10 +330,10 @@ export default function VehicleVerificationPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
+                  <option value="notVerified">Not Verified</option>
                   <option value="approved">Approved</option>
+                  <option value="pending">Pending</option>
                   <option value="rejected">Rejected</option>
-                  <option value="expired">Expired</option>
                 </select>
               </div>
               <div>
@@ -349,9 +344,10 @@ export default function VehicleVerificationPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Types</option>
-                  <option value="Motorcycle">Motorcycle</option>
-                  <option value="Car">Car</option>
-                  <option value="Truck">Truck</option>
+                  <option value="Two Wheeler">Two Wheeler</option>
+                  <option value="Four Wheeler">Four Wheeler</option>
+                  <option value="Two Wheeler Electric">Two Wheeler Electric</option>
+                  <option value="Four Wheeler Electric">Four Wheeler Electric</option>
                 </select>
               </div>
               <div>
@@ -373,9 +369,29 @@ export default function VehicleVerificationPage() {
           {/* Verifications Table */}
           <div className="bg-white rounded-lg shadow">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Vehicle Verifications</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">Vehicle Verifications</h3>
+                <div className="text-sm text-gray-500">
+                  Showing {filteredVerifications.length} of {verifications.length} verifications
+                  {(searchTerm || statusFilter !== 'all' || vehicleTypeFilter !== 'all' || brandFilter !== 'all') && (
+                    <span className="ml-2 text-blue-600">
+                      (filtered)
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-            {filteredVerifications.length === 0 ? (
+            {loading ? (
+              <div className="px-6 py-12 text-center">
+                <div className="flex flex-col items-center">
+                  <svg className="w-16 h-16 text-gray-400 mb-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Loading vehicle verifications...</h3>
+                  <p className="text-gray-500">Please wait while we fetch the data.</p>
+                </div>
+              </div>
+            ) : filteredVerifications.length === 0 ? (
               <div className="px-6 py-12 text-center">
                 <div className="flex flex-col items-center">
                   <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -405,7 +421,7 @@ export default function VehicleVerificationPage() {
                         Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Submitted
+                        Created
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -423,10 +439,16 @@ export default function VehicleVerificationPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{verification.vehicleNumber}</div>
-                            <div className="text-sm text-gray-500">{verification.brand} {verification.model} ({verification.year})</div>
+                            <div className="text-sm font-medium text-gray-900">{verification.vehicleNumber || 'N/A'}</div>
+                            <div className="text-sm text-gray-500">
+                              {[
+                                verification.brand,
+                                verification.model,
+                                verification.year ? `(${verification.year})` : null
+                              ].filter(Boolean).join(' ') || 'No vehicle details'}
+                            </div>
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getVehicleTypeColor(verification.vehicleType)}`}>
-                              {verification.vehicleType}
+                              {formatVehicleType(verification.vehicleType)}
                             </span>
                           </div>
                         </td>
@@ -436,33 +458,37 @@ export default function VehicleVerificationPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(verification.submittedAt)}
+                          {formatDate(verification.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
-                            <button
-                              onClick={() => {/* View document */}}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              View
-                            </button>
                             {verification.status === 'pending' && (
                               <>
                                 <button
-                                  onClick={() => handleStatusUpdate(verification.id, 'approved')}
+                                  onClick={() => handleStatusUpdate(verification, 'approved')}
                                   disabled={loading}
                                   className="text-green-600 hover:text-green-900 disabled:opacity-50"
                                 >
                                   Approve
                                 </button>
                                 <button
-                                  onClick={() => handleStatusUpdate(verification.id, 'rejected')}
+                                  onClick={() => handleStatusUpdate(verification, 'rejected')}
                                   disabled={loading}
                                   className="text-red-600 hover:text-red-900 disabled:opacity-50"
                                 >
                                   Reject
                                 </button>
                               </>
+                            )}
+                            {(verification.status === 'approved' || verification.status === 'rejected') && (
+                              <span className="text-gray-500 text-sm">
+                                {verification.status === 'approved' ? 'Approved' : 'Rejected'} by {verification.verifiedBy}
+                              </span>
+                            )}
+                            {verification.status === 'notVerified' && (
+                              <span className="text-gray-500 text-sm">
+                                Not submitted for verification
+                              </span>
                             )}
                           </div>
                         </td>

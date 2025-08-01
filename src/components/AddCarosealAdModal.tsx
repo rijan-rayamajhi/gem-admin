@@ -42,12 +42,7 @@ export default function AddCarosealAdModal({
     isVisible: boolean;
   } | null>(null);
 
-  const appScreenOptions = [
-    { value: 'Home', label: 'Home' },
-    { value: 'Offers', label: 'Offers' },
-    { value: 'Profile', label: 'Profile' },
-    { value: 'Settings', label: 'Settings' },
-  ];
+
 
   // Handle image file selection
   const handleImageChange = (file: File | null) => {
@@ -283,18 +278,15 @@ export default function AddCarosealAdModal({
                 placeholder="Enter website URL (e.g. https://example.com)"
               />
             ) : formData.actionTypeType === 'app_screen' ? (
-              <select
+              <input
+                type="text"
                 value={formData.actionTypeValue}
                 onChange={(e) => updateFormField('actionTypeValue', e.target.value)}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   errors.actionTypeValue ? 'border-red-500' : 'border-gray-300'
                 }`}
-              >
-                <option value="">Select app screen</option>
-                {appScreenOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+                placeholder="Enter app screen routes (e.g. Home, Offers, Profile, Settings)"
+              />
             ) : (
               // Location action type fields
               <div className="space-y-4">
