@@ -227,6 +227,21 @@ export default function VehicleBrandsPage() {
     });
   };
 
+  const mapVehicleTypeToDatabase = (vehicleType: string) => {
+    switch (vehicleType) {
+      case 'Two Wheeler':
+        return 'two_wheeler';
+      case 'Four Wheeler':
+        return 'four_wheeler';
+      case 'Two Wheeler Electric':
+        return 'two_wheeler_electric';
+      case 'Four Wheeler Electric':
+        return 'four_wheeler_electric';
+      default:
+        return vehicleType;
+    }
+  };
+
   const handleApproveRequest = async (request: VehicleBrandRequest) => {
     try {
       setActionLoading(request.id);
@@ -237,7 +252,7 @@ export default function VehicleBrandsPage() {
           name: request.brandName!,
           status: 'Active',
           models: [],
-          vehicleType: request.vehicleType,
+          vehicleType: mapVehicleTypeToDatabase(request.vehicleType),
           logoUrl: '',
         });
       } else if (request.type === 'model') {
@@ -387,7 +402,7 @@ export default function VehicleBrandsPage() {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           name: model,
         })),
-        vehicleType: request.vehicleType,
+        vehicleType: mapVehicleTypeToDatabase(request.vehicleType),
         logoUrl: request.imageUrl || '',
       });
 
