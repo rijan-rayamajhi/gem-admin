@@ -21,6 +21,10 @@ export default function AppSettingsPage() {
     appVersion: '',
     appDescription: '',
     appTagline: '',
+    totalGemCoins: '',
+    totalDistance: '',
+    totalRides: '',
+    referAndEarnText: '',
     
     // Legal & Compliance
     termsAndConditions: '',
@@ -50,6 +54,10 @@ export default function AppSettingsPage() {
         appVersion: settings.appVersion || '',
         appDescription: settings.appDescription || '',
         appTagline: settings.appTagline || '',
+        totalGemCoins: settings.totalGemCoins || '',
+        totalDistance: settings.totalDistance || '',
+        totalRides: settings.totalRides || '',
+        referAndEarnText: settings.referAndEarnText || '',
         termsAndConditions: settings.termsAndConditions || '',
         contactEmail: settings.contactEmail || '',
         contactPhone: settings.contactPhone || '',
@@ -210,6 +218,54 @@ export default function AppSettingsPage() {
                   onChange={(e) => handleDirectInputChange('appTagline', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter app tagline"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Total Gem Coins
+                </label>
+                <input
+                  type="text"
+                  value={formData.totalGemCoins}
+                  onChange={(e) => handleDirectInputChange('totalGemCoins', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 1,000,000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Total Distance
+                </label>
+                <input
+                  type="text"
+                  value={formData.totalDistance}
+                  onChange={(e) => handleDirectInputChange('totalDistance', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 50,000 km"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Total Rides
+                </label>
+                <input
+                  type="text"
+                  value={formData.totalRides}
+                  onChange={(e) => handleDirectInputChange('totalRides', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 10,000"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Refer and Earn Text
+                </label>
+                <textarea
+                  value={formData.referAndEarnText}
+                  onChange={(e) => handleDirectInputChange('referAndEarnText', e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter refer and earn text"
                 />
               </div>
             </div>

@@ -6,19 +6,24 @@ export interface VehicleVerification {
   userId: string;
   userName: string;
   userEmail: string;
-  vehicleNumber: string;
+  brandId: string;
+  brandImage: string;
+  brandName: string;
+  modelId: string;
+  modelName: string;
+  registrationNumber: string;
   vehicleType: string;
-  brand: string;
-  model: string;
-  year: string;
-  registrationAuthority: string;
-  registrationDate: string;
-  expiryDate: string;
+  tyreType: string;
   status: 'notVerified' | 'approved' | 'pending' | 'rejected';
-  documentUrl: string;
+  rcFrontView: string;
+  rcBackView: string;
+  vehicleFrontView: string;
+  vehicleBackView: string;
+  vehicleImages: string[];
+  verificationSubmittedAt?: string;
   createdAt: string;
-  updatedAt?: string;
-  verifiedAt?: string;
+  updatedAt?: any; // Firebase Timestamp
+  verifiedAt?: any; // Firebase Timestamp
   verifiedBy?: string;
   notes?: string;
 }
@@ -32,19 +37,24 @@ export interface UserProfile {
 
 export interface Vehicle {
   id: string;
-  vehicleNumber: string;
+  brandId: string;
+  brandImage: string;
+  brandName: string;
+  modelId: string;
+  modelName: string;
+  registrationNumber: string;
   vehicleType: string;
-  brand: string;
-  model: string;
-  year: string;
-  registrationAuthority: string;
-  registrationDate: string;
-  expiryDate: string;
+  tyreType: string;
   status: 'notVerified' | 'approved' | 'pending' | 'rejected';
-  documentUrl: string;
+  rcFrontView: string;
+  rcBackView: string;
+  vehicleFrontView: string;
+  vehicleBackView: string;
+  vehicleImages: string[];
+  verificationSubmittedAt?: string;
   createdAt: string;
-  updatedAt?: string;
-  verifiedAt?: string;
+  updatedAt?: any; // Firebase Timestamp
+  verifiedAt?: any; // Firebase Timestamp
   verifiedBy?: string;
   notes?: string;
 }
@@ -98,16 +108,21 @@ class VehicleVerificationService {
             userId: userId,
             userName: userName,
             userEmail: userEmail,
-            vehicleNumber: vehicleData.vehicleNumber,
+            brandId: vehicleData.brandId,
+            brandImage: vehicleData.brandImage,
+            brandName: vehicleData.brandName,
+            modelId: vehicleData.modelId,
+            modelName: vehicleData.modelName,
+            registrationNumber: vehicleData.registrationNumber,
             vehicleType: vehicleData.vehicleType,
-            brand: vehicleData.brand,
-            model: vehicleData.model,
-            year: vehicleData.year,
-            registrationAuthority: vehicleData.registrationAuthority,
-            registrationDate: vehicleData.registrationDate,
-            expiryDate: vehicleData.expiryDate,
+            tyreType: vehicleData.tyreType,
             status: vehicleData.status,
-            documentUrl: vehicleData.documentUrl,
+            rcFrontView: vehicleData.rcFrontView,
+            rcBackView: vehicleData.rcBackView,
+            vehicleFrontView: vehicleData.vehicleFrontView,
+            vehicleBackView: vehicleData.vehicleBackView,
+            vehicleImages: vehicleData.vehicleImages || [],
+            verificationSubmittedAt: vehicleData.verificationSubmittedAt,
             createdAt: vehicleData.createdAt,
             updatedAt: vehicleData.updatedAt,
             verifiedAt: vehicleData.verifiedAt,
@@ -139,8 +154,8 @@ class VehicleVerificationService {
       
       const updateData: any = {
         status: status,
-        updatedAt: Timestamp.now().toDate().toISOString(),
-        verifiedAt: Timestamp.now().toDate().toISOString(),
+        updatedAt: Timestamp.now(),
+        verifiedAt: Timestamp.now(),
         verifiedBy: verifiedBy,
       };
       
@@ -153,6 +168,30 @@ class VehicleVerificationService {
       console.error('Error updating vehicle status:', error);
       throw new Error('Failed to update vehicle status');
     }
+  }
+
+  /**
+   * Approve vehicle verification (sets status to approved)
+   */
+  async approveVehicle(
+    userId: string, 
+    vehicleId: string, 
+    verifiedBy: string,
+    notes?: string
+  ): Promise<void> {
+    return this.updateVehicleStatus(userId, vehicleId, 'approved', verifiedBy, notes);
+  }
+
+  /**
+   * Reject vehicle verification (sets status to rejected)
+   */
+  async rejectVehicle(
+    userId: string, 
+    vehicleId: string, 
+    verifiedBy: string,
+    notes?: string
+  ): Promise<void> {
+    return this.updateVehicleStatus(userId, vehicleId, 'rejected', verifiedBy, notes);
   }
 
   /**
@@ -194,16 +233,21 @@ class VehicleVerificationService {
         userId: userId,
         userName: userName,
         userEmail: userEmail,
-        vehicleNumber: vehicleData.vehicleNumber,
+        brandId: vehicleData.brandId,
+        brandImage: vehicleData.brandImage,
+        brandName: vehicleData.brandName,
+        modelId: vehicleData.modelId,
+        modelName: vehicleData.modelName,
+        registrationNumber: vehicleData.registrationNumber,
         vehicleType: vehicleData.vehicleType,
-        brand: vehicleData.brand,
-        model: vehicleData.model,
-        year: vehicleData.year,
-        registrationAuthority: vehicleData.registrationAuthority,
-        registrationDate: vehicleData.registrationDate,
-        expiryDate: vehicleData.expiryDate,
+        tyreType: vehicleData.tyreType,
         status: vehicleData.status,
-        documentUrl: vehicleData.documentUrl,
+        rcFrontView: vehicleData.rcFrontView,
+        rcBackView: vehicleData.rcBackView,
+        vehicleFrontView: vehicleData.vehicleFrontView,
+        vehicleBackView: vehicleData.vehicleBackView,
+        vehicleImages: vehicleData.vehicleImages || [],
+        verificationSubmittedAt: vehicleData.verificationSubmittedAt,
         createdAt: vehicleData.createdAt,
         updatedAt: vehicleData.updatedAt,
         verifiedAt: vehicleData.verifiedAt,
@@ -262,16 +306,21 @@ class VehicleVerificationService {
           userId: userId,
           userName: userName,
           userEmail: userEmail,
-          vehicleNumber: vehicleData.vehicleNumber,
+          brandId: vehicleData.brandId,
+          brandImage: vehicleData.brandImage,
+          brandName: vehicleData.brandName,
+          modelId: vehicleData.modelId,
+          modelName: vehicleData.modelName,
+          registrationNumber: vehicleData.registrationNumber,
           vehicleType: vehicleData.vehicleType,
-          brand: vehicleData.brand,
-          model: vehicleData.model,
-          year: vehicleData.year,
-          registrationAuthority: vehicleData.registrationAuthority,
-          registrationDate: vehicleData.registrationDate,
-          expiryDate: vehicleData.expiryDate,
+          tyreType: vehicleData.tyreType,
           status: vehicleData.status,
-          documentUrl: vehicleData.documentUrl,
+          rcFrontView: vehicleData.rcFrontView,
+          rcBackView: vehicleData.rcBackView,
+          vehicleFrontView: vehicleData.vehicleFrontView,
+          vehicleBackView: vehicleData.vehicleBackView,
+          vehicleImages: vehicleData.vehicleImages || [],
+          verificationSubmittedAt: vehicleData.verificationSubmittedAt,
           createdAt: vehicleData.createdAt,
           updatedAt: vehicleData.updatedAt,
           verifiedAt: vehicleData.verifiedAt,

@@ -7,6 +7,10 @@ export interface AppSettings {
   appVersion: string;
   appDescription: string;
   appTagline: string;
+  totalGemCoins: string;
+  totalDistance: string;
+  totalRides: string;
+  referAndEarnText: string;
   
   // Legal & Compliance
   termsAndConditions: string;
@@ -95,6 +99,10 @@ class AppSettingsService {
       appVersion: '1.0.0',
       appDescription: 'Comprehensive admin dashboard for GEM platform management',
       appTagline: 'Empowering event management and business growth',
+      totalGemCoins: '1,000,000',
+      totalDistance: '50,000 km',
+      totalRides: '10,000',
+      referAndEarnText: 'Refer your friends and earn rewards! Share your referral code and both you and your friend will get bonus gem coins.',
       
       // Legal & Compliance
       termsAndConditions: 'By using this application, you agree to our terms and conditions...',
@@ -259,6 +267,10 @@ class AppSettingsService {
     appVersion: string;
     appDescription: string;
     appTagline: string;
+    totalGemCoins: string;
+    totalDistance: string;
+    totalRides: string;
+    referAndEarnText: string;
   }> {
     const settings = await this.getAppSettings();
     if (!settings) {
@@ -270,6 +282,10 @@ class AppSettingsService {
       appVersion: settings.appVersion,
       appDescription: settings.appDescription,
       appTagline: settings.appTagline,
+      totalGemCoins: settings.totalGemCoins,
+      totalDistance: settings.totalDistance,
+      totalRides: settings.totalRides,
+      referAndEarnText: settings.referAndEarnText,
     };
   }
 }

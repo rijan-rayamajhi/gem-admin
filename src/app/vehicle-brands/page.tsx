@@ -227,7 +227,7 @@ export default function VehicleBrandsPage() {
     });
   };
 
-  const mapVehicleTypeToDatabase = (vehicleType: string) => {
+  const mapVehicleTypeToDatabase = (vehicleType: string): 'two_wheeler' | 'four_wheeler' | 'two_wheeler_electric' | 'four_wheeler_electric' => {
     switch (vehicleType) {
       case 'Two Wheeler':
         return 'two_wheeler';
@@ -238,7 +238,7 @@ export default function VehicleBrandsPage() {
       case 'Four Wheeler Electric':
         return 'four_wheeler_electric';
       default:
-        return vehicleType;
+        return 'two_wheeler'; // fallback to two_wheeler as default
     }
   };
 

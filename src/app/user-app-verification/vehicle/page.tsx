@@ -9,6 +9,266 @@ import { vehicleVerificationService, VehicleVerification } from '@/lib/vehicleVe
 
 
 
+interface ViewVehicleModalProps {
+  verification: VehicleVerification | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const formatDate = (dateValue: any) => {
+  if (!dateValue) return 'N/A';
+  
+  let date: Date;
+  if (typeof dateValue === 'string') {
+    date = new Date(dateValue);
+  } else if (dateValue && dateValue.toDate) {
+    // Firebase Timestamp
+    date = dateValue.toDate();
+  } else {
+    date = new Date(dateValue);
+  }
+  
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+function ViewVehicleModal({ verification, isOpen, onClose }: ViewVehicleModalProps) {
+  if (!isOpen || !verification) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-gray-900">Vehicle Verification Details</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* User Information */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-900 mb-3">User Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <p className="text-sm text-gray-900">{verification.userName}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <p className="text-sm text-gray-900">{verification.userEmail}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Vehicle Information */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-900 mb-3">Vehicle Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Registration Number</label>
+                <p className="text-sm text-gray-900 font-mono">{verification.registrationNumber}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Vehicle Type</label>
+                <p className="text-sm text-gray-900">{verification.vehicleType}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Brand</label>
+                <p className="text-sm text-gray-900">{verification.brandName}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Model</label>
+                <p className="text-sm text-gray-900">{verification.modelName}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Tyre Type</label>
+                <p className="text-sm text-gray-900">{verification.tyreType}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                  verification.status === 'approved' ? 'bg-green-100 text-green-800' :
+                  verification.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                  verification.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {verification.status.charAt(0).toUpperCase() + verification.status.slice(1)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Brand Image */}
+          {verification.brandImage && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Brand Image</h3>
+              <div className="flex justify-center">
+                <img
+                  src={verification.brandImage}
+                  alt={`${verification.brandName} logo`}
+                  className="max-w-32 max-h-32 object-contain rounded-lg"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* RC Documents */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-900 mb-3">RC Documents</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {verification.rcFrontView && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">RC Front View</label>
+                  <img
+                    src={verification.rcFrontView}
+                    alt="RC Front View"
+                    className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+              {verification.rcBackView && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">RC Back View</label>
+                  <img
+                    src={verification.rcBackView}
+                    alt="RC Back View"
+                    className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Vehicle Images */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-900 mb-3">Vehicle Images</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {verification.vehicleFrontView && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Front View</label>
+                  <img
+                    src={verification.vehicleFrontView}
+                    alt="Vehicle Front View"
+                    className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+              {verification.vehicleBackView && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Back View</label>
+                  <img
+                    src={verification.vehicleBackView}
+                    alt="Vehicle Back View"
+                    className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* Additional Vehicle Images */}
+            {verification.vehicleImages && verification.vehicleImages.length > 0 && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Additional Images</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {verification.vehicleImages.map((image, index) => (
+                    <img
+                      key={index}
+                      src={image}
+                      alt={`Vehicle Image ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg border border-gray-300"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Verification Details */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-900 mb-3">Verification Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Created At</label>
+                <p className="text-sm text-gray-900">
+                  {formatDate(verification.createdAt)}
+                </p>
+              </div>
+              {verification.verificationSubmittedAt && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Submitted For Verification</label>
+                  <p className="text-sm text-gray-900">
+                    {formatDate(verification.verificationSubmittedAt)}
+                  </p>
+                </div>
+              )}
+              {verification.verifiedAt && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Verified At</label>
+                  <p className="text-sm text-gray-900">
+                    {formatDate(verification.verifiedAt)}
+                  </p>
+                </div>
+              )}
+              {verification.verifiedBy && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Verified By</label>
+                  <p className="text-sm text-gray-900">{verification.verifiedBy}</p>
+                </div>
+              )}
+            </div>
+            {verification.notes && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700">Notes</label>
+                <p className="text-sm text-gray-900 bg-white p-2 rounded border">{verification.notes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function VehicleVerificationPage() {
   const { user } = useAuth();
   const [verifications, setVerifications] = useState<VehicleVerification[]>([]);
@@ -18,6 +278,8 @@ export default function VehicleVerificationPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
+  const [selectedVerification, setSelectedVerification] = useState<VehicleVerification | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -39,15 +301,15 @@ export default function VehicleVerificationPage() {
       filtered = filtered.filter((verification) => {
         const userName = (verification.userName || '').toLowerCase();
         const userEmail = (verification.userEmail || '').toLowerCase();
-        const vehicleNumber = (verification.vehicleNumber || '').toLowerCase();
-        const brand = (verification.brand || '').toLowerCase();
-        const model = (verification.model || '').toLowerCase();
+        const registrationNumber = (verification.registrationNumber || '').toLowerCase();
+        const brandName = (verification.brandName || '').toLowerCase();
+        const modelName = (verification.modelName || '').toLowerCase();
         
         return userName.includes(searchLower) ||
                userEmail.includes(searchLower) ||
-               vehicleNumber.includes(searchLower) ||
-               brand.includes(searchLower) ||
-               model.includes(searchLower);
+               registrationNumber.includes(searchLower) ||
+               brandName.includes(searchLower) ||
+               modelName.includes(searchLower);
       });
     }
 
@@ -60,25 +322,15 @@ export default function VehicleVerificationPage() {
     if (vehicleTypeFilter !== 'all') {
       filtered = filtered.filter((verification) => {
         const vehicleType = verification.vehicleType || '';
-        // Handle both formatted and raw vehicle types
-        if (vehicleTypeFilter === 'Two Wheeler') {
-          return vehicleType === 'two_wheeler' || vehicleType === 'Motorcycle';
-        } else if (vehicleTypeFilter === 'Four Wheeler') {
-          return vehicleType === 'four_wheeler' || vehicleType === 'Car';
-        } else if (vehicleTypeFilter === 'Two Wheeler Electric') {
-          return vehicleType === 'two_wheeler_electric';
-        } else if (vehicleTypeFilter === 'Four Wheeler Electric') {
-          return vehicleType === 'four_wheeler_electric';
-        }
-        return vehicleType === vehicleTypeFilter;
+        return vehicleType.toLowerCase() === vehicleTypeFilter.toLowerCase();
       });
     }
 
     // Brand filter
     if (brandFilter !== 'all') {
       filtered = filtered.filter((verification) => {
-        const brand = verification.brand || '';
-        return brand.toLowerCase() === brandFilter.toLowerCase();
+        const brandName = verification.brandName || '';
+        return brandName.toLowerCase() === brandFilter.toLowerCase();
       });
     }
 
@@ -114,30 +366,30 @@ export default function VehicleVerificationPage() {
 
   const getVehicleTypeColor = (type: string) => {
     const colors = {
-      Motorcycle: 'bg-blue-100 text-blue-800',
-      Car: 'bg-green-100 text-green-800',
-      two_wheeler: 'bg-blue-100 text-blue-800',
-      four_wheeler: 'bg-green-100 text-green-800',
-      two_wheeler_electric: 'bg-cyan-100 text-cyan-800',
-      four_wheeler_electric: 'bg-emerald-100 text-emerald-800',
+      'two_wheeler': 'bg-blue-100 text-blue-800',
+      'four_wheeler': 'bg-green-100 text-green-800',
+      'two_wheeler_electric': 'bg-cyan-100 text-cyan-800',
+      'four_wheeler_electric': 'bg-emerald-100 text-emerald-800',
+      'Motorcycle': 'bg-blue-100 text-blue-800',
+      'Car': 'bg-green-100 text-green-800',
     };
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const formatVehicleType = (type: string) => {
-    const typeMap: { [key: string]: string } = {
-      'two_wheeler': 'Two Wheeler',
-      'four_wheeler': 'Four Wheeler',
-      'two_wheeler_electric': 'Two Wheeler Electric',
-      'four_wheeler_electric': 'Four Wheeler Electric',
-      'Motorcycle': 'Motorcycle',
-      'Car': 'Car',
-    };
-    return typeMap[type] || type;
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateValue: any) => {
+    if (!dateValue) return 'N/A';
+    
+    let date: Date;
+    if (typeof dateValue === 'string') {
+      date = new Date(dateValue);
+    } else if (dateValue && dateValue.toDate) {
+      // Firebase Timestamp
+      date = dateValue.toDate();
+    } else {
+      date = new Date(dateValue);
+    }
+    
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -149,13 +401,21 @@ export default function VehicleVerificationPage() {
       setLoading(true);
       
       // Update the verification status in Firebase
-      await vehicleVerificationService.updateVehicleStatus(
-        verification.userId,
-        verification.id,
-        newStatus,
-        user?.email || 'admin',
-        notes
-      );
+      if (newStatus === 'approved') {
+        await vehicleVerificationService.approveVehicle(
+          verification.userId,
+          verification.id,
+          user?.email || 'admin',
+          notes
+        );
+      } else {
+        await vehicleVerificationService.rejectVehicle(
+          verification.userId,
+          verification.id,
+          user?.email || 'admin',
+          notes
+        );
+      }
 
       // Reload the data to get the updated information
       await loadVehicleVerifications();
@@ -177,6 +437,11 @@ export default function VehicleVerificationPage() {
     }
   };
 
+  const handleViewVerification = (verification: VehicleVerification) => {
+    setSelectedVerification(verification);
+    setShowViewModal(true);
+  };
+
   const getStats = () => {
     const total = verifications.length;
     const notVerified = verifications.filter(v => v.status === 'notVerified').length;
@@ -189,24 +454,24 @@ export default function VehicleVerificationPage() {
 
   const getUniqueBrands = () => {
     const brands = verifications
-      .map(v => v.brand)
-      .filter(brand => brand && brand.trim() !== '') // Filter out null, undefined, and empty strings
-      .map(brand => brand.trim()); // Trim whitespace
+      .map(v => v.brandName)
+      .filter(brand => brand && brand.trim() !== '')
+      .map(brand => brand.trim());
     
-    return [...new Set(brands)].sort(); // Remove duplicates and sort alphabetically
+    return [...new Set(brands)].sort();
   };
 
   const getUniqueVehicleTypes = () => {
     const types = verifications
       .map(v => v.vehicleType)
-      .filter(type => type && type.trim() !== '') // Filter out null, undefined, and empty strings
-      .map(type => formatVehicleType(type)); // Format the vehicle type
+      .filter(type => type && type.trim() !== '');
     
-    return [...new Set(types)].sort(); // Remove duplicates and sort alphabetically
+    return [...new Set(types)].sort();
   };
 
   const stats = getStats();
   const uniqueBrands = getUniqueBrands();
+  const uniqueVehicleTypes = getUniqueVehicleTypes();
 
   return (
     <ProtectedRoute>
@@ -291,8 +556,6 @@ export default function VehicleVerificationPage() {
                 </div>
               </div>
             </div>
-
-
           </div>
 
           {/* Filters */}
@@ -316,7 +579,7 @@ export default function VehicleVerificationPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
                 <input
                   type="text"
-                  placeholder="Search by name, email, vehicle number, brand, or model..."
+                  placeholder="Search by name, email, registration number, brand, or model..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -344,10 +607,9 @@ export default function VehicleVerificationPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Types</option>
-                  <option value="Two Wheeler">Two Wheeler</option>
-                  <option value="Four Wheeler">Four Wheeler</option>
-                  <option value="Two Wheeler Electric">Two Wheeler Electric</option>
-                  <option value="Four Wheeler Electric">Four Wheeler Electric</option>
+                  {uniqueVehicleTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -439,16 +701,18 @@ export default function VehicleVerificationPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{verification.vehicleNumber || 'N/A'}</div>
+                            <div className="text-sm font-medium text-gray-900 font-mono">
+                              {verification.registrationNumber || 'N/A'}
+                            </div>
                             <div className="text-sm text-gray-500">
                               {[
-                                verification.brand,
-                                verification.model,
-                                verification.year ? `(${verification.year})` : null
-                              ].filter(Boolean).join(' ') || 'No vehicle details'}
+                                verification.brandName,
+                                verification.modelName,
+                                verification.tyreType
+                              ].filter(Boolean).join(' • ') || 'No vehicle details'}
                             </div>
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getVehicleTypeColor(verification.vehicleType)}`}>
-                              {formatVehicleType(verification.vehicleType)}
+                              {verification.vehicleType}
                             </span>
                           </div>
                         </td>
@@ -462,6 +726,12 @@ export default function VehicleVerificationPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleViewVerification(verification)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              View
+                            </button>
                             {verification.status === 'pending' && (
                               <>
                                 <button
@@ -500,6 +770,16 @@ export default function VehicleVerificationPage() {
             )}
           </div>
         </div>
+
+        {/* View Vehicle Modal */}
+        <ViewVehicleModal
+          verification={selectedVerification}
+          isOpen={showViewModal}
+          onClose={() => {
+            setShowViewModal(false);
+            setSelectedVerification(null);
+          }}
+        />
 
         {/* Notification */}
         {notification && (
