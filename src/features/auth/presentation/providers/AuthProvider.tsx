@@ -4,7 +4,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthUser } from '../../domain/entities/User';
 import { SignInUseCase } from '../../domain/usecases/SignInUseCase';
 import { SignOutUseCase } from '../../domain/usecases/SignOutUseCase';
-import { GetCurrentUserUseCase } from '../../domain/usecases/GetCurrentUserUseCase';
 import { FirebaseAuthRepository } from '../../data/repositories/FirebaseAuthRepository';
 
 interface AuthContextType {

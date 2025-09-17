@@ -1,9 +1,11 @@
 'use client';
 
 import { useAuth } from '@/features/auth/presentation/providers/AuthProvider';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   const handleLogout = async () => {
     try {
@@ -43,87 +45,31 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-card-foreground mb-2">Dashboard</h2>
-          <p className="text-muted-foreground">Welcome to your admin dashboard</p>
+          <p className="text-muted-foreground">Manage your application and access key features</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-card border border-primary rounded-xl p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mr-4">
-                <span className="text-primary font-bold text-lg">📊</span>
+        {/* Feature Cards */}
+        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          {/* Settings Card */}
+          <div 
+            className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-all cursor-pointer hover:border-primary/50"
+            onClick={() => {
+              router.push('/settings');
+            }}
+          >
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Users</p>
-                <p className="text-2xl font-bold text-card-foreground">1,234</p>
-              </div>
+              <h3 className="text-lg font-semibold text-card-foreground">App Settings</h3>
             </div>
-          </div>
-
-          <div className="bg-card border border-primary rounded-xl p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center mr-4">
-                <span className="text-success font-bold text-lg">✅</span>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Active Sessions</p>
-                <p className="text-2xl font-bold text-card-foreground">89</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-primary rounded-xl p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center mr-4">
-                <span className="text-warning font-bold text-lg">⚠️</span>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Pending Tasks</p>
-                <p className="text-2xl font-bold text-card-foreground">12</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-primary rounded-xl p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-destructive/10 rounded-lg flex items-center justify-center mr-4">
-                <span className="text-destructive font-bold text-lg">🚨</span>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Alerts</p>
-                <p className="text-2xl font-bold text-card-foreground">3</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-card border border-primary rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-card-foreground mb-4">Recent Activity</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-success rounded-full mr-3"></div>
-                <span className="text-card-foreground">User John Doe logged in</span>
-              </div>
-              <span className="text-muted-foreground text-sm">2 minutes ago</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-warning rounded-full mr-3"></div>
-                <span className="text-card-foreground">New user registration</span>
-              </div>
-              <span className="text-muted-foreground text-sm">5 minutes ago</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-primary rounded-full mr-3"></div>
-                <span className="text-card-foreground">System backup completed</span>
-              </div>
-              <span className="text-muted-foreground text-sm">1 hour ago</span>
-            </div>
+            <p className="text-muted-foreground">Configure application settings</p>
           </div>
         </div>
       </main>

@@ -5,7 +5,16 @@ const urlsToCache = [
   '/favicon.png'
 ];
 
+// Check if we're in development mode
+const isDevelopment = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
 self.addEventListener('install', (event) => {
+  // Skip caching in development
+  if (isDevelopment) {
+    console.log('Service Worker: Development mode - skipping cache installation');
+    return;
+  }
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
@@ -13,6 +22,11 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Skip caching in development - always fetch fresh
+  if (isDevelopment) {
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
