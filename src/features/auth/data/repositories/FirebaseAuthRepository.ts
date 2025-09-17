@@ -1,13 +1,11 @@
 import { 
   User, 
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
   signOut, 
-  onAuthStateChanged,
-  updateProfile
+  onAuthStateChanged
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { AuthRepository, SignInCredentials, SignUpCredentials } from '../../domain/repositories/AuthRepository';
+import { AuthRepository, SignInCredentials } from '../../domain/repositories/AuthRepository';
 import { AuthUser } from '../../domain/entities/User';
 
 export class FirebaseAuthRepository implements AuthRepository {
@@ -20,21 +18,6 @@ export class FirebaseAuthRepository implements AuthRepository {
     return this.mapFirebaseUserToAuthUser(userCredential.user);
   }
 
-  async signUp(credentials: SignUpCredentials): Promise<AuthUser> {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth, 
-      credentials.email, 
-      credentials.password
-    );
-
-    if (credentials.displayName && userCredential.user) {
-      await updateProfile(userCredential.user, { 
-        displayName: credentials.displayName 
-      });
-    }
-
-    return this.mapFirebaseUserToAuthUser(userCredential.user);
-  }
 
   async signOut(): Promise<void> {
     await signOut(auth);

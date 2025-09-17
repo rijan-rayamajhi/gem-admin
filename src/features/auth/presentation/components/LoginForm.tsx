@@ -20,7 +20,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     try {
       await signIn(email, password);
       onSuccess?.();
-    } catch (error) {
+    } catch {
       // Error is handled by the auth context
     } finally {
       setIsLoading(false);

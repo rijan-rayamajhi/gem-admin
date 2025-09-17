@@ -7,8 +7,9 @@ export class SignInUseCase {
   async execute(credentials: SignInCredentials): Promise<AuthUser> {
     try {
       return await this.authRepository.signIn(credentials);
-    } catch (error: any) {
-      throw new Error(this.getErrorMessage(error.code));
+    } catch (error: unknown) {
+      const errorCode = (error as { code?: string }).code || 'unknown';
+      throw new Error(this.getErrorMessage(errorCode));
     }
   }
 

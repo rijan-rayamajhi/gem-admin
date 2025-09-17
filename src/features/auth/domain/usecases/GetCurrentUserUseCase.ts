@@ -7,7 +7,8 @@ export class GetCurrentUserUseCase {
   async execute(): Promise<AuthUser | null> {
     try {
       return await this.authRepository.getCurrentUser();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('GetCurrentUserUseCase error:', error);
       throw new Error('Failed to get current user.');
     }
   }
