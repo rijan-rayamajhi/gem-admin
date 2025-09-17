@@ -1,3 +1,9 @@
+export interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+}
+
 export interface AppSettings {
   appName: string;
   appTagline: string;
@@ -6,6 +12,7 @@ export interface AppSettings {
   whatsappNumber: string;
   phoneNumber: string;
   appVersion: string;
+  faqs: FAQ[];
 }
 
 export const defaultAppSettings: AppSettings = {
@@ -16,4 +23,5 @@ export const defaultAppSettings: AppSettings = {
   whatsappNumber: '',
   phoneNumber: '',
   appVersion: '',
+  faqs: [],
 };

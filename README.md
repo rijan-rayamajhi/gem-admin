@@ -11,6 +11,9 @@ A modern, responsive admin dashboard that works beautifully on both mobile devic
 - **Touch-Friendly** - Optimized for touch interactions
 - **Fast Performance** - Optimized loading and caching
 - **Accessibility** - WCAG compliant with proper focus management
+- **Authentication System** - Secure Firebase-based user authentication
+- **Settings Management** - Comprehensive app configuration system
+- **Clean Architecture** - Well-structured, maintainable codebase
 
 ## 🚀 Getting Started
 
@@ -44,7 +47,9 @@ yarn dev
 pnpm dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+4. Configure Firebase (see Firebase Setup section below)
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ## 📱 PWA Installation
 
@@ -77,7 +82,8 @@ pnpm dev
 - **Fonts**: Geist Sans & Geist Mono
 - **PWA**: Service Worker + Web App Manifest
 - **TypeScript**: Full type safety
-- **Firebase**: Ready for backend integration
+- **Firebase**: Authentication & Firestore database
+- **Architecture**: Clean Architecture with Domain-Driven Design
 
 ## 📁 Project Structure
 
@@ -86,15 +92,29 @@ my_admin/
 ├── public/
 │   ├── manifest.json          # PWA manifest
 │   ├── sw.js                  # Service worker
-│   ├── icon-192.svg           # App icon (192x192)
-│   └── icon-512.svg           # App icon (512x512)
+│   ├── app_logo.PNG           # App logo
+│   └── favicon.png            # App favicon
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx         # Root layout with PWA setup
 │   │   ├── page.tsx           # Main dashboard page
+│   │   ├── login/             # Authentication pages
+│   │   ├── settings/          # App settings page
 │   │   └── globals.css        # Global styles
-│   └── components/
-│       └── PWAInstaller.tsx   # Service worker registration
+│   ├── components/
+│   │   ├── Dashboard.tsx      # Main dashboard component
+│   │   └── PWAInstaller.tsx   # Service worker registration
+│   ├── features/              # Feature-based architecture
+│   │   ├── auth/              # Authentication feature
+│   │   │   ├── domain/         # Business logic & entities
+│   │   │   ├── data/           # Data access layer
+│   │   │   └── presentation/   # UI components & providers
+│   │   └── app-settings/      # Settings management feature
+│   │       ├── domain/         # Business logic & entities
+│   │       ├── data/           # Data access layer
+│   │       └── presentation/   # UI components & providers
+│   └── lib/
+│       └── firebase.ts         # Firebase configuration
 └── next.config.ts             # Next.js configuration
 ```
 
@@ -106,11 +126,83 @@ my_admin/
 - **Responsive Navigation** - Mobile-first sidebar
 - **Dark Mode** - Automatic theme switching
 
+### Authentication System:
+- **Secure Login** - Firebase Authentication integration
+- **Route Protection** - AuthGuard component for protected routes
+- **User Management** - Current user state management
+- **Error Handling** - User-friendly authentication errors
+
+### Settings Management:
+- **App Configuration** - Comprehensive settings management
+- **FAQ Management** - Dynamic FAQ creation and editing
+- **Contact Information** - Email, phone, WhatsApp configuration
+- **Terms & Conditions** - Link management for legal documents
+
 ### PWA Features:
 - **Offline Support** - Basic offline functionality
 - **App-like Experience** - Standalone window mode
 - **Fast Loading** - Optimized caching strategies
 - **Mobile Optimized** - Touch-friendly interactions
+
+## 🔥 Firebase Setup
+
+### Prerequisites
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
+2. Enable Authentication with Email/Password provider
+3. Create a Firestore database
+4. Get your Firebase configuration
+
+### Configuration
+1. Copy your Firebase config to `src/lib/firebase.ts`:
+
+```typescript
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+
+const firebaseConfig = {
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
+};
+
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+```
+
+2. Configure Firestore security rules for the `admin_data` collection
+3. Set up authentication providers in Firebase Console
+
+### Required Firebase Services
+- **Authentication**: Email/Password provider
+- **Firestore**: Database for settings storage
+- **Security Rules**: Proper access control
+
+## 🏗️ Architecture & Features
+
+This application follows **Clean Architecture** principles with feature-based organization:
+
+### Feature Documentation
+Each major feature includes comprehensive documentation:
+
+- **[Authentication Feature](./src/features/auth/README.md)** - Complete authentication system documentation
+- **[App Settings Feature](./src/features/app-settings/README.md)** - Settings management system documentation
+
+### Architecture Benefits
+- **Separation of Concerns** - Clear boundaries between domain, data, and presentation layers
+- **Testability** - Easy to unit test with dependency injection
+- **Maintainability** - Well-structured code that's easy to understand and modify
+- **Scalability** - Feature-based organization supports growth
+- **Reusability** - Components and use cases can be easily reused
+
+### Firebase Integration
+- **Authentication** - Secure user login/logout with Firebase Auth
+- **Firestore** - Real-time database for settings and user data
+- **Error Handling** - Comprehensive error mapping and user feedback
 
 ## 🚀 Deployment
 
@@ -136,10 +228,27 @@ Update the color scheme in `tailwind.config.js` or modify CSS variables in `glob
 - Update `public/manifest.json` to change PWA settings
 - Modify `src/components/PWAInstaller.tsx` for service worker customization
 
+### Authentication:
+- Customize login form in `src/features/auth/presentation/components/LoginForm.tsx`
+- Modify authentication logic in `src/features/auth/domain/usecases/`
+- Update user entity in `src/features/auth/domain/entities/User.ts`
+
+### Settings:
+- Add new settings fields in `src/features/app-settings/domain/entities/AppSettings.ts`
+- Customize settings form in `src/features/app-settings/presentation/components/SettingsForm.tsx`
+- Modify FAQ management in `src/features/app-settings/presentation/components/FAQsManager.tsx`
+
 ### Adding Pages:
 1. Create new files in `src/app/` directory
 2. Update navigation in `src/app/page.tsx`
 3. Add routing as needed
+4. Protect routes with `AuthGuard` component if authentication is required
+
+### Adding Features:
+1. Follow the Clean Architecture pattern in `src/features/`
+2. Create domain, data, and presentation layers
+3. Add comprehensive documentation (README.md)
+4. Implement proper error handling and validation
 
 ## 📱 Mobile Optimization
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { AppSettings } from '../../domain/entities/AppSettings';
+import { AppSettings, defaultAppSettings } from '../../domain/entities/AppSettings';
 import { GetSettingsUseCase } from '../../domain/usecases/GetSettingsUseCase';
 import { SaveSettingsUseCase } from '../../domain/usecases/SaveSettingsUseCase';
 import { ResetSettingsUseCase } from '../../domain/usecases/ResetSettingsUseCase';
@@ -33,15 +33,7 @@ interface SettingsProviderProps {
 }
 
 export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) => {
-  const [settings, setSettings] = useState<AppSettings>({
-    appName: '',
-    appTagline: '',
-    termsAndConditionLink: '',
-    email: '',
-    whatsappNumber: '',
-    phoneNumber: '',
-    appVersion: '',
-  });
+  const [settings, setSettings] = useState<AppSettings>(defaultAppSettings);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

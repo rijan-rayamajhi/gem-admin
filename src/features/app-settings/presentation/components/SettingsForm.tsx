@@ -1,6 +1,7 @@
 'use client';
 
 import { useSettings } from '../providers/SettingsProvider';
+import FAQsManager from './FAQsManager';
 
 export default function SettingsForm() {
   const {
@@ -15,6 +16,10 @@ export default function SettingsForm() {
 
   const handleInputChange = (field: keyof typeof settings, value: string) => {
     updateSettings({ [field]: value });
+  };
+
+  const handleFAQsChange = (faqs: typeof settings.faqs) => {
+    updateSettings({ faqs });
   };
 
   const handleSave = async () => {
@@ -104,6 +109,14 @@ export default function SettingsForm() {
               onChange={(e) => handleInputChange('termsAndConditionLink', e.target.value)}
               className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="https://example.com/terms"
+            />
+          </div>
+
+          {/* FAQs */}
+          <div className="md:col-span-2">
+            <FAQsManager
+              faqs={settings.faqs}
+              onChange={handleFAQsChange}
             />
           </div>
 
