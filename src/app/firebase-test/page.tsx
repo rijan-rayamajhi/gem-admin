@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 export default function FirebaseTestPage() {
   const [firebaseStatus, setFirebaseStatus] = useState<string>('Checking...');
-  const [authState, setAuthState] = useState<any>(null);
+  const [authState, setAuthState] = useState<User | null>(null);
 
   useEffect(() => {
     // Test Firebase connection
