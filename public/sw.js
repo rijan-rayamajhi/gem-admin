@@ -1,9 +1,8 @@
 const CACHE_NAME = 'my-admin-v1';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json'
+  '/manifest.json',
+  '/favicon.png'
 ];
 
 self.addEventListener('install', (event) => {
