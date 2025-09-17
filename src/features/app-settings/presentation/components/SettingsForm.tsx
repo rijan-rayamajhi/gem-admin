@@ -52,11 +52,11 @@ export default function SettingsForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-card-foreground mb-2">Application Settings</h2>
-        <p className="text-muted-foreground">Configure your application settings and preferences</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-card-foreground mb-2">Application Settings</h2>
+        <p className="text-muted-foreground text-sm sm:text-base">Configure your application settings and preferences</p>
         {error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-800 text-sm">{error}</p>
@@ -65,8 +65,8 @@ export default function SettingsForm() {
       </div>
 
       {/* Settings Form */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* App Name */}
           <div className="md:col-span-2">
             <label htmlFor="appName" className="block text-sm font-medium text-card-foreground mb-2">
@@ -182,11 +182,11 @@ export default function SettingsForm() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-border">
+        <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border">
           <button
             type="button"
             onClick={handleReset}
-            className="px-6 py-2 border border-border text-card-foreground rounded-lg hover:bg-muted transition-colors"
+            className="px-4 sm:px-6 py-2 border border-border text-card-foreground rounded-lg hover:bg-muted transition-colors w-full sm:w-auto"
             disabled={saving}
           >
             Reset
@@ -195,10 +195,10 @@ export default function SettingsForm() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 sm:px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
           >
             {saving ? (
-              <div className="flex items-center">
+              <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Saving...
               </div>

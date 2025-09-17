@@ -45,14 +45,14 @@ export default function FAQsManager({ faqs, onChange }: FAQsManagerProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
         <label className="block text-sm font-medium text-card-foreground">
           FAQs
         </label>
         <button
           type="button"
           onClick={addFAQ}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm w-full sm:w-auto"
         >
           + Add FAQ
         </button>
@@ -70,7 +70,7 @@ export default function FAQsManager({ faqs, onChange }: FAQsManagerProps) {
               key={faq.id}
               className="border border-border rounded-lg p-4 bg-card"
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 space-y-2 sm:space-y-0">
                 <span className="text-sm font-medium text-muted-foreground">
                   FAQ #{index + 1}
                 </span>
@@ -82,11 +82,11 @@ export default function FAQsManager({ faqs, onChange }: FAQsManagerProps) {
                   >
                     {expandedFAQ === faq.id ? (
                       <>
-                        <span>−</span> Collapse
+                        <span>−</span> <span className="hidden sm:inline">Collapse</span>
                       </>
                     ) : (
                       <>
-                        <span>+</span> Expand
+                        <span>+</span> <span className="hidden sm:inline">Expand</span>
                       </>
                     )}
                   </button>
@@ -133,10 +133,12 @@ export default function FAQsManager({ faqs, onChange }: FAQsManagerProps) {
               {expandedFAQ !== faq.id && (
                 <div className="text-sm text-muted-foreground">
                   {faq.question ? (
-                    <div>
-                      <strong>Q:</strong> {faq.question}
+                    <div className="space-y-1">
+                      <div className="break-words">
+                        <strong>Q:</strong> {faq.question}
+                      </div>
                       {faq.answer && (
-                        <div className="mt-1">
+                        <div className="break-words">
                           <strong>A:</strong> {faq.answer.length > 100 ? `${faq.answer.substring(0, 100)}...` : faq.answer}
                         </div>
                       )}

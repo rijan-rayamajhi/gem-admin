@@ -60,6 +60,16 @@ body {
   font-family: var(--font-montserrat), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Ensure safe area handling */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Ensure html also respects safe areas */
+html {
+  background: var(--background);
 }
 
 /* Custom scrollbar */
@@ -92,12 +102,50 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
-/* Touch-friendly tap targets */
+/* Touch-friendly tap targets and mobile optimizations */
 @media (max-width: 768px) {
   button,
   a {
     min-height: 44px;
     min-width: 44px;
+  }
+  
+  /* Prevent text overflow */
+  * {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  /* Improve text readability on mobile */
+  body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  /* Better spacing for mobile */
+  .space-y-6 > * + * {
+    margin-top: 1rem;
+  }
+  
+  /* Responsive text sizes */
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.125rem; }
+  
+  /* Better input handling */
+  input, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Improve grid responsiveness */
+  .grid {
+    gap: 1rem;
+  }
+  
+  /* Better button spacing */
+  .flex.space-x-4 > * + * {
+    margin-left: 0.75rem;
   }
 }
 
