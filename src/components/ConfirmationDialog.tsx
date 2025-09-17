@@ -11,6 +11,7 @@ interface ConfirmationDialogProps {
   confirmText?: string;
   cancelText?: string;
   variant?: 'default' | 'destructive';
+  children?: React.ReactNode;
 }
 
 export default function ConfirmationDialog({
@@ -21,7 +22,8 @@ export default function ConfirmationDialog({
   message,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
-  variant = 'default'
+  variant = 'default',
+  children
 }: ConfirmationDialogProps) {
   if (!isOpen) return null;
 
@@ -83,6 +85,12 @@ export default function ConfirmationDialog({
         <p className="text-muted-foreground mb-6">
           {message}
         </p>
+        
+        {children && (
+          <div className="mb-6">
+            {children}
+          </div>
+        )}
         
         <div className="flex justify-end space-x-3">
           <button
