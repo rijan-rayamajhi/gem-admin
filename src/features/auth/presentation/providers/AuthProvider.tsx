@@ -34,13 +34,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize use cases
-  const authRepository = new FirebaseAuthRepository();
-  const signInUseCase = new SignInUseCase(authRepository);
-  const signOutUseCase = new SignOutUseCase(authRepository);
+  // Initialize use cases (use useMemo to prevent recreation on every render)
+  const authRepository = React.useMemo(() => new FirebaseAuthRepository(), []);
+  const signInUseCase = React.useMemo(() => new SignInUseCase(authRepository), [authRepository]);
+  const signOutUseCase = React.useMemo(() => new SignOutUseCase(authRepository), [authRepository]);
 
   useEffect(() => {
     const unsubscribe = authRepository.onAuthStateChanged((user) => {
+      console.log('Auth state changed:', user);
       setUser(user);
       setLoading(false);
     });
@@ -50,10 +51,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('SignIn attempt:', email);
       setError(null);
       setLoading(true);
-      await signInUseCase.execute({ email, password });
+      const result = await signInUseCase.execute({ email, password });
+      console.log('SignIn successful:', result);
     } catch (error: unknown) {
+      console.error('SignIn error:', error);
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setError(errorMessage);
       throw error;

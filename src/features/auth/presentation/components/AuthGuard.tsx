@@ -25,7 +25,9 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   const router = useRouter();
 
   useEffect(() => {
+    console.log('AuthGuard - user:', user, 'loading:', loading);
     if (!loading && !user) {
+      console.log('Redirecting to login...');
       router.push('/login');
     }
   }, [user, loading, router]);
