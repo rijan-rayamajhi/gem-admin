@@ -61,7 +61,7 @@ export default function FAQsManager({ faqs, onChange }: FAQsManagerProps) {
       {safeFAQs.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
           <p>No FAQs added yet.</p>
-          <p className="text-sm">Click "Add FAQ" to get started.</p>
+          <p className="text-sm">Click &quot;Add FAQ&quot; to get started.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -142,7 +142,7 @@ export default function FAQsManager({ faqs, onChange }: FAQsManagerProps) {
                       )}
                     </div>
                   ) : (
-                    <span>Click "Expand" to edit this FAQ</span>
+                    <span>Click &quot;Expand&quot; to edit this FAQ</span>
                   )}
                 </div>
               )}

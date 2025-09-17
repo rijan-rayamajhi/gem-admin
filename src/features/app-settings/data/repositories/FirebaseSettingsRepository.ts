@@ -7,7 +7,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { SettingsRepository } from '../../domain/repositories/SettingsRepository';
-import { AppSettings, defaultAppSettings, FAQ } from '../../domain/entities/AppSettings';
+import { AppSettings, defaultAppSettings } from '../../domain/entities/AppSettings';
 
 const SETTINGS_COLLECTION = 'admin_data';
 const SETTINGS_DOC_ID = 'app_settings';
