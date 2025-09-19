@@ -150,49 +150,169 @@ export function openUPIApp(
 }
 
 /**
- * Get available UPI apps based on platform
+ * Get available UPI apps by detecting installed apps
  */
-export function getAvailableUPIApps(): typeof UPI_APPS {
-  if (isAndroid()) {
-    // Return all apps for Android
-    return UPI_APPS;
-  } else if (isIOS()) {
-    // Return apps that work well on iOS
-    return UPI_APPS.filter(app => 
-      ['googlepay', 'phonepe', 'paytm'].includes(app.id)
-    );
-  } else {
+export async function getAvailableUPIApps(): Promise<typeof UPI_APPS> {
+  if (!isMobileDevice()) {
     // For desktop, return popular apps
     return UPI_APPS.filter(app => 
       ['googlepay', 'phonepe', 'paytm'].includes(app.id)
     );
   }
+
+  const availableApps = [];
+  
+  // Check each UPI app to see if it's installed
+  for (const app of UPI_APPS) {
+    try {
+      const isInstalled = await isUPIAppInstalled(app.id);
+      if (isInstalled) {
+        availableApps.push(app);
+      }
+    } catch (error) {
+      console.log(`Could not detect ${app.name}:`, error);
+    }
+  }
+
+  // If no apps detected, fallback to platform-specific defaults
+  if (availableApps.length === 0) {
+    if (isAndroid()) {
+      return UPI_APPS; // Return all for Android
+    } else if (isIOS()) {
+      return UPI_APPS.filter(app => 
+        ['googlepay', 'phonepe', 'paytm'].includes(app.id)
+      );
+    }
+  }
+
+  return availableApps;
 }
 
 /**
- * Check if a specific UPI app is installed (Android only)
+ * Check if a specific UPI app is installed
  */
 export async function isUPIAppInstalled(appId: string): Promise<boolean> {
-  if (!isAndroid()) return false;
-  
   const app = UPI_APPS.find(a => a.id === appId);
   if (!app) return false;
 
   try {
-    // Try to open the app and see if it responds
-    const testUrl = `${app.scheme}test`;
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = testUrl;
-    document.body.appendChild(iframe);
-    
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-        resolve(true); // Assume app is installed if no error
-      }, 1000);
-    });
-  } catch {
+    if (isAndroid()) {
+      // For Android, try to detect using intent
+      return await detectAndroidApp(app);
+    } else if (isIOS()) {
+      // For iOS, try to detect using URL scheme
+      return await detectIOSApp(app);
+    } else {
+      // For desktop, assume not installed
+      return false;
+    }
+  } catch (error) {
+    console.log(`Error detecting ${app.name}:`, error);
     return false;
   }
+}
+
+/**
+ * Detect Android app using intent detection
+ */
+async function detectAndroidApp(app: typeof UPI_APPS[0]): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      // Create a hidden iframe to test the app
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.style.width = '1px';
+      iframe.style.height = '1px';
+      
+      // Test URL for the app
+      const testUrl = `${app.scheme}test`;
+      iframe.src = testUrl;
+      
+      // Add to DOM
+      document.body.appendChild(iframe);
+      
+      // Set timeout to detect if app opened
+      let appOpened = false;
+      const timeout = setTimeout(() => {
+        if (!appOpened) {
+          document.body.removeChild(iframe);
+          resolve(false);
+        }
+      }, 1500);
+      
+      // Listen for page visibility change (indicates app opened)
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          appOpened = true;
+          clearTimeout(timeout);
+          document.body.removeChild(iframe);
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+          resolve(true);
+        }
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      // Also listen for blur event
+      const handleBlur = () => {
+        appOpened = true;
+        clearTimeout(timeout);
+        document.body.removeChild(iframe);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('blur', handleBlur);
+        resolve(true);
+      };
+      
+      window.addEventListener('blur', handleBlur);
+      
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+/**
+ * Detect iOS app using URL scheme detection
+ */
+async function detectIOSApp(app: typeof UPI_APPS[0]): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      // For iOS, we can try to open the app and detect if it opens
+      const testUrl = `${app.scheme}test`;
+      
+      // Create a temporary link
+      const link = document.createElement('a');
+      link.href = testUrl;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      
+      // Track if we're still visible after clicking
+      let appOpened = false;
+      const timeout = setTimeout(() => {
+        if (!appOpened) {
+          document.body.removeChild(link);
+          resolve(false);
+        }
+      }, 1000);
+      
+      // Listen for visibility change
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          appOpened = true;
+          clearTimeout(timeout);
+          document.body.removeChild(link);
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+          resolve(true);
+        }
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      // Click the link
+      link.click();
+      
+    } catch {
+      resolve(false);
+    }
+  });
 }
