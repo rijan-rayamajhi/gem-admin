@@ -11,6 +11,8 @@ export class UpdateMonetizationSettingsUseCase {
       // Create default settings if none exist
       const defaultSettings: MonetizationSettings = {
         id: 'default',
+        monetizationMessage: 'Welcome to our monetization program! Earn rewards and cash out your earnings.',
+        faqs: [],
         allowCashout: true,
         predefinedAmounts: [10, 25, 50, 100],
         bankBalance: 1000,

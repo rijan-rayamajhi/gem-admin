@@ -8,16 +8,16 @@ export enum CashoutStatus {
 export interface CashoutRequest {
   id: string;
   userId: string;
-  userEmail: string;
-  userDisplayName: string;
+  userName: string;
+  phoneNumber: string;
+  whatsappNumber: string;
+  upiId: string;
   amount: number;
   status: CashoutStatus;
   requestedAt: Date;
   processedAt?: Date;
   processedBy?: string;
   rejectionReason?: string;
-  paymentMethod: string;
-  paymentDetails: string;
   notes?: string;
 }
 

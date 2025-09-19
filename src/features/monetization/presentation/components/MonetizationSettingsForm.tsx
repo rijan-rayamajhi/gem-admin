@@ -3,16 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useMonetization } from '../providers/MonetizationProvider';
 import { MonetizationSettings } from '../../domain/entities/MonetizationSettings';
+import MonetizationFAQsManager from './MonetizationFAQsManager';
 
 export default function MonetizationSettingsForm() {
   const { settings, loadingSettings, updateSettings } = useMonetization();
   const [formData, setFormData] = useState<Partial<MonetizationSettings>>({});
+  const [predefinedAmountsInput, setPredefinedAmountsInput] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (settings) {
       setFormData({
+        monetizationMessage: settings.monetizationMessage,
+        faqs: settings.faqs,
         allowCashout: settings.allowCashout,
         predefinedAmounts: settings.predefinedAmounts,
         bankBalance: settings.bankBalance,
@@ -26,9 +30,12 @@ export default function MonetizationSettingsForm() {
         maxLimitCashout: settings.maxLimitCashout,
         minCashout: settings.minCashout,
       });
+      setPredefinedAmountsInput(settings.predefinedAmounts?.join(', ') || '');
     } else {
       // Initialize with empty values when no settings exist
       setFormData({
+        monetizationMessage: '',
+        faqs: [],
         allowCashout: false,
         predefinedAmounts: [],
         bankBalance: 0,
@@ -46,6 +53,7 @@ export default function MonetizationSettingsForm() {
         maxLimitCashout: 0,
         minCashout: 0,
       });
+      setPredefinedAmountsInput('');
     }
   }, [settings]);
 
@@ -64,7 +72,7 @@ export default function MonetizationSettingsForm() {
     }
   };
 
-  const handleInputChange = (field: keyof MonetizationSettings, value: string | number | boolean | string[] | { minimumRides: number; minimumDistance: number; minimumReferrals: number }) => {
+  const handleInputChange = (field: keyof MonetizationSettings, value: string | number | boolean | string[] | { minimumRides: number; minimumDistance: number; minimumReferrals: number } | import('../../domain/entities/MonetizationSettings').FAQ[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -97,6 +105,34 @@ export default function MonetizationSettingsForm() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Monetization Message */}
+        <div className="space-y-4">
+          <h4 className="text-lg font-semibold text-card-foreground border-b border-border pb-2">Monetization Message</h4>
+          
+          <div>
+            <label className="block text-sm font-medium text-card-foreground mb-1">
+              Message for Users
+            </label>
+            <textarea
+              value={formData.monetizationMessage || ''}
+              onChange={(e) => handleInputChange('monetizationMessage', e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="Enter a message about monetization for users..."
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground mt-1">This message will be displayed to users regarding monetization features</p>
+          </div>
+        </div>
+
+        {/* FAQs */}
+        <div className="space-y-4">
+          <h4 className="text-lg font-semibold text-card-foreground border-b border-border pb-2">Monetization FAQs</h4>
+          <MonetizationFAQsManager
+            faqs={formData.faqs}
+            onChange={(faqs) => handleInputChange('faqs', faqs)}
+          />
+        </div>
+
         {/* For All Users */}
         <div className="space-y-4">
           <h4 className="text-lg font-semibold text-card-foreground border-b border-border pb-2">For All Users</h4>
@@ -120,10 +156,13 @@ export default function MonetizationSettingsForm() {
             </label>
             <input
               type="text"
-              value={formData.predefinedAmounts?.join(', ') || ''}
+              value={predefinedAmountsInput}
               onChange={(e) => {
+                setPredefinedAmountsInput(e.target.value);
+              }}
+              onBlur={(e) => {
                 const inputValue = e.target.value;
-                // Allow commas and spaces, filter out invalid characters
+                // Process the input when user finishes typing
                 const amounts = inputValue.split(/[,\s]+/)
                   .map(s => s.trim())
                   .filter(s => s !== '')

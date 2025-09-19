@@ -1,5 +1,17 @@
+export interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+}
+
 export interface MonetizationSettings {
   id: string;
+  
+  // Monetization Message
+  monetizationMessage: string;
+  
+  // FAQs
+  faqs: FAQ[];
   
   // For All Users
   allowCashout: boolean;
@@ -29,6 +41,8 @@ export interface MonetizationSettings {
 }
 
 export interface MonetizationSettingsUpdate {
+  monetizationMessage?: string;
+  faqs?: FAQ[];
   allowCashout?: boolean;
   predefinedAmounts?: number[];
   bankBalance?: number;

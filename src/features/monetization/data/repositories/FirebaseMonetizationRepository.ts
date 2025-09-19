@@ -9,7 +9,8 @@ import {
   where, 
   orderBy,
   serverTimestamp,
-  setDoc 
+  setDoc,
+  Timestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { MonetizationRepository } from '../../domain/repositories/MonetizationRepository';
@@ -19,8 +20,30 @@ import { MonetizationSettings, MonetizationSettingsUpdate } from '../../domain/e
 
 export class FirebaseMonetizationRepository implements MonetizationRepository {
   private earningsCollection = collection(db, 'earnings');
-  private cashoutRequestsCollection = collection(db, 'cashoutRequests');
+  private cashoutRequestsCollection = collection(db, 'cashout_requests');
   private settingsDocRef = doc(db, 'admin_data', 'monetization_settings');
+
+  private parseDate(dateValue: unknown): Date | undefined {
+    if (!dateValue) return undefined;
+    
+    // If it's a Firestore Timestamp
+    if (dateValue instanceof Timestamp) {
+      return dateValue.toDate();
+    }
+    
+    // If it's already a Date object
+    if (dateValue instanceof Date) {
+      return dateValue;
+    }
+    
+    // If it's a string (ISO format)
+    if (typeof dateValue === 'string') {
+      return new Date(dateValue);
+    }
+    
+    // Fallback to current date
+    return new Date();
+  }
 
   // Earnings Management
   async getEarnings(userId: string): Promise<Earnings | null> {
@@ -92,8 +115,8 @@ export class FirebaseMonetizationRepository implements MonetizationRepository {
     return {
       id: docSnap.id,
       ...data,
-      requestedAt: data.requestedAt?.toDate() || new Date(),
-      processedAt: data.processedAt?.toDate(),
+      requestedAt: this.parseDate(data.requestedAt) || new Date(),
+      processedAt: this.parseDate(data.processedAt),
     } as CashoutRequest;
   }
 
@@ -106,8 +129,8 @@ export class FirebaseMonetizationRepository implements MonetizationRepository {
       return {
         id: doc.id,
         ...data,
-        requestedAt: data.requestedAt?.toDate() || new Date(),
-        processedAt: data.processedAt?.toDate(),
+        requestedAt: this.parseDate(data.requestedAt),
+        processedAt: this.parseDate(data.processedAt),
       } as CashoutRequest;
     });
   }
@@ -125,8 +148,8 @@ export class FirebaseMonetizationRepository implements MonetizationRepository {
       return {
         id: doc.id,
         ...data,
-        requestedAt: data.requestedAt?.toDate() || new Date(),
-        processedAt: data.processedAt?.toDate(),
+        requestedAt: this.parseDate(data.requestedAt) || new Date(),
+        processedAt: this.parseDate(data.processedAt),
       } as CashoutRequest;
     });
   }
@@ -144,8 +167,8 @@ export class FirebaseMonetizationRepository implements MonetizationRepository {
       return {
         id: doc.id,
         ...data,
-        requestedAt: data.requestedAt?.toDate() || new Date(),
-        processedAt: data.processedAt?.toDate(),
+        requestedAt: this.parseDate(data.requestedAt) || new Date(),
+        processedAt: this.parseDate(data.processedAt),
       } as CashoutRequest;
     });
   }
