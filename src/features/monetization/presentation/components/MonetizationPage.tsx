@@ -4,6 +4,7 @@ import { useAuth } from '@/features/auth/presentation/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
+import PullToRefresh from '@/components/PullToRefresh';
 import { MonetizationProvider } from '../providers/MonetizationProvider';
 import MonetizationSettingsForm from './MonetizationSettingsForm';
 import CashoutRequestsManager from './CashoutRequestsManager';
@@ -27,8 +28,13 @@ function MonetizationContent() {
     }
   };
 
+  const handleRefresh = async () => {
+    // For monetization page, we'll refresh the page to reload all data
+    window.location.reload();
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b border-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -123,7 +129,7 @@ function MonetizationContent() {
         cancelText="Cancel"
         variant="destructive"
       />
-    </div>
+    </PullToRefresh>
   );
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useDrivingLicense } from '../providers/DrivingLicenseProvider';
 import { DrivingLicense, VerificationStatus, DrivingLicenseUpdate } from '../../domain/entities/DrivingLicense';
 
@@ -145,9 +146,11 @@ export default function DrivingLicenseDetailsModal({ licenseId, isOpen, onClose 
                     <label className="text-sm font-medium text-muted-foreground mb-2 block">Front Image</label>
                     <div className="border border-border rounded-lg p-4 bg-muted/50">
                       {license.frontImagePath ? (
-                        <img
+                        <Image
                           src={license.frontImagePath}
                           alt="License front"
+                          width={400}
+                          height={192}
                           className="w-full h-48 object-contain rounded"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -168,9 +171,11 @@ export default function DrivingLicenseDetailsModal({ licenseId, isOpen, onClose 
                     <label className="text-sm font-medium text-muted-foreground mb-2 block">Back Image</label>
                     <div className="border border-border rounded-lg p-4 bg-muted/50">
                       {license.backImagePath ? (
-                        <img
+                        <Image
                           src={license.backImagePath}
                           alt="License back"
+                          width={400}
+                          height={192}
                           className="w-full h-48 object-contain rounded"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;

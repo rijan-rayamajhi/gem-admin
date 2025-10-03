@@ -29,7 +29,7 @@ The feature follows the Clean Architecture pattern used throughout the applicati
 
 ## Data Structure
 
-Driving license data is stored in Firebase under `users/{userId}/drivingLicenses` with the following structure:
+Driving license data is stored in Firebase under `users/{userId}/drivingLicense` with the following structure:
 
 ```typescript
 {

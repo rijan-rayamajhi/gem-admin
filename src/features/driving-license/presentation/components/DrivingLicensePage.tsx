@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/features/auth/presentation/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
+import PullToRefresh from '@/components/PullToRefresh';
 import { useDrivingLicense } from '../providers/DrivingLicenseProvider';
 import { VerificationStatus } from '../../domain/entities/DrivingLicense';
 import DrivingLicenseTable from './DrivingLicenseTable';
@@ -26,21 +27,21 @@ function DrivingLicenseContent() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  useEffect(() => {
-    loadDrivingLicenses();
-  }, []);
-
-  const loadDrivingLicenses = async () => {
+  const loadDrivingLicenses = useCallback(async () => {
     if (selectedStatus === 'all') {
       await getAllDrivingLicenses();
     } else {
       await getDrivingLicensesByStatus(selectedStatus);
     }
-  };
+  }, [selectedStatus, getAllDrivingLicenses, getDrivingLicensesByStatus]);
 
   useEffect(() => {
     loadDrivingLicenses();
-  }, [selectedStatus]);
+  }, [loadDrivingLicenses]);
+
+  useEffect(() => {
+    loadDrivingLicenses();
+  }, [selectedStatus, loadDrivingLicenses]);
 
   const handleStatusFilter = (status: VerificationStatus | 'all') => {
     setSelectedStatus(status);
@@ -68,6 +69,10 @@ function DrivingLicenseContent() {
     }
   };
 
+  const handleRefresh = async () => {
+    await loadDrivingLicenses();
+  };
+
   const getStatusCounts = () => {
     const counts = {
       all: drivingLicenses.length,
@@ -86,7 +91,7 @@ function DrivingLicenseContent() {
   const statusCounts = getStatusCounts();
 
   return (
-    <div className="min-h-screen bg-background">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b border-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -224,7 +229,7 @@ function DrivingLicenseContent() {
         cancelText="Cancel"
         variant="destructive"
       />
-    </div>
+    </PullToRefresh>
   );
 }
 

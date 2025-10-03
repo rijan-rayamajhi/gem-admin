@@ -3,11 +3,7 @@ import {
   doc, 
   getDocs, 
   getDoc, 
-  query, 
-  where, 
-  updateDoc, 
-  deleteDoc,
-  Timestamp 
+  updateDoc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { DrivingLicenseRepository } from '../../domain/repositories/DrivingLicenseRepository';
@@ -23,29 +19,24 @@ export class FirebaseDrivingLicenseRepository implements DrivingLicenseRepositor
 
       for (const userDoc of usersSnapshot.docs) {
         const userData = userDoc.data();
-        if (userData.drivingLicenses) {
-          const licenses = Array.isArray(userData.drivingLicenses) 
-            ? userData.drivingLicenses 
-            : [userData.drivingLicenses];
-
-          for (const license of licenses) {
-            drivingLicenses.push({
-              id: `${userDoc.id}_${license.id || Date.now()}`,
-              userId: userDoc.id,
-              userEmail: userData.email || '',
-              userDisplayName: userData.displayName || userData.name || 'Unknown User',
-              licenseType: license.licenseType || '',
-              frontImagePath: license.frontImagePath || '',
-              backImagePath: license.backImagePath || '',
-              dob: license.dob ? (license.dob.toDate ? license.dob.toDate() : new Date(license.dob)) : new Date(),
-              verificationStatus: license.verificationStatus || VerificationStatus.PENDING,
-              submittedAt: license.submittedAt ? (license.submittedAt.toDate ? license.submittedAt.toDate() : new Date(license.submittedAt)) : new Date(),
-              reviewedAt: license.reviewedAt ? (license.reviewedAt.toDate ? license.reviewedAt.toDate() : new Date(license.reviewedAt)) : undefined,
-              reviewedBy: license.reviewedBy || undefined,
-              rejectionReason: license.rejectionReason || undefined,
-              notes: license.notes || undefined,
-            });
-          }
+        if (userData.drivingLicense) {
+          const license = userData.drivingLicense;
+          drivingLicenses.push({
+            id: `${userDoc.id}_0`,
+            userId: userDoc.id,
+            userEmail: userData.email || '',
+            userDisplayName: userData.displayName || userData.name || 'Unknown User',
+            licenseType: license.licenseType || '',
+            frontImagePath: license.frontImagePath || '',
+            backImagePath: license.backImagePath || '',
+            dob: license.dob ? (license.dob.toDate ? license.dob.toDate() : new Date(license.dob)) : new Date(),
+            verificationStatus: license.verificationStatus || VerificationStatus.PENDING,
+            submittedAt: license.submittedAt ? (license.submittedAt.toDate ? license.submittedAt.toDate() : new Date(license.submittedAt)) : new Date(),
+            reviewedAt: license.reviewedAt ? (license.reviewedAt.toDate ? license.reviewedAt.toDate() : new Date(license.reviewedAt)) : undefined,
+            reviewedBy: license.reviewedBy || undefined,
+            rejectionReason: license.rejectionReason || undefined,
+            notes: license.notes || undefined,
+          });
         }
       }
 
@@ -58,7 +49,7 @@ export class FirebaseDrivingLicenseRepository implements DrivingLicenseRepositor
 
   async getDrivingLicenseById(id: string): Promise<DrivingLicense | null> {
     try {
-      const [userId, licenseId] = id.split('_');
+      const [userId] = id.split('_');
       const userDoc = await getDoc(doc(db, this.collectionName, userId));
       
       if (!userDoc.exists()) {
@@ -66,18 +57,11 @@ export class FirebaseDrivingLicenseRepository implements DrivingLicenseRepositor
       }
 
       const userData = userDoc.data();
-      if (!userData.drivingLicenses) {
+      if (!userData.drivingLicense) {
         return null;
       }
 
-      const licenses = Array.isArray(userData.drivingLicenses) 
-        ? userData.drivingLicenses 
-        : [userData.drivingLicenses];
-
-      const license = licenses.find(l => `${userId}_${l.id || Date.now()}` === id);
-      if (!license) {
-        return null;
-      }
+      const license = userData.drivingLicense;
 
       return {
         id,
@@ -110,16 +94,14 @@ export class FirebaseDrivingLicenseRepository implements DrivingLicenseRepositor
       }
 
       const userData = userDoc.data();
-      if (!userData.drivingLicenses) {
+      if (!userData.drivingLicense) {
         return [];
       }
 
-      const licenses = Array.isArray(userData.drivingLicenses) 
-        ? userData.drivingLicenses 
-        : [userData.drivingLicenses];
+      const license = userData.drivingLicense;
 
-      return licenses.map((license, index) => ({
-        id: `${userId}_${license.id || index}`,
+      return [{
+        id: `${userId}_0`,
         userId,
         userEmail: userData.email || '',
         userDisplayName: userData.displayName || userData.name || 'Unknown User',
@@ -133,7 +115,7 @@ export class FirebaseDrivingLicenseRepository implements DrivingLicenseRepositor
         reviewedBy: license.reviewedBy || undefined,
         rejectionReason: license.rejectionReason || undefined,
         notes: license.notes || undefined,
-      })).sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+      }];
     } catch (error) {
       console.error('Error fetching driving licenses by user ID:', error);
       throw new Error('Failed to fetch driving licenses for user');
@@ -152,7 +134,7 @@ export class FirebaseDrivingLicenseRepository implements DrivingLicenseRepositor
 
   async updateDrivingLicense(update: DrivingLicenseUpdate): Promise<DrivingLicense> {
     try {
-      const [userId, licenseId] = update.id.split('_');
+      const [userId] = update.id.split('_');
       const userDocRef = doc(db, this.collectionName, userId);
       const userDoc = await getDoc(userDocRef);
       
@@ -161,32 +143,29 @@ export class FirebaseDrivingLicenseRepository implements DrivingLicenseRepositor
       }
 
       const userData = userDoc.data();
-      if (!userData.drivingLicenses) {
-        throw new Error('No driving licenses found for user');
-      }
-
-      const licenses = Array.isArray(userData.drivingLicenses) 
-        ? [...userData.drivingLicenses] 
-        : [userData.drivingLicenses];
-
-      const licenseIndex = licenses.findIndex(l => `${userId}_${l.id || licenses.indexOf(l)}` === update.id);
-      if (licenseIndex === -1) {
-        throw new Error('Driving license not found');
+      if (!userData.drivingLicense) {
+        throw new Error('No driving license found for user');
       }
 
       // Update the license
-      licenses[licenseIndex] = {
-        ...licenses[licenseIndex],
+      const updatedLicenseData: Record<string, unknown> = {
+        ...userData.drivingLicense,
         verificationStatus: update.verificationStatus,
-        rejectionReason: update.rejectionReason,
-        notes: update.notes,
         reviewedBy: update.reviewedBy,
         reviewedAt: new Date(),
       };
 
+      // Only add optional fields if they are defined
+      if (update.rejectionReason !== undefined) {
+        updatedLicenseData.rejectionReason = update.rejectionReason;
+      }
+      if (update.notes !== undefined) {
+        updatedLicenseData.notes = update.notes;
+      }
+
       // Update the user document
       await updateDoc(userDocRef, {
-        drivingLicenses: licenses
+        drivingLicense: updatedLicenseData
       });
 
       // Return the updated license
@@ -204,7 +183,7 @@ export class FirebaseDrivingLicenseRepository implements DrivingLicenseRepositor
 
   async deleteDrivingLicense(id: string): Promise<void> {
     try {
-      const [userId, licenseId] = id.split('_');
+      const [userId] = id.split('_');
       const userDocRef = doc(db, this.collectionName, userId);
       const userDoc = await getDoc(userDocRef);
       
@@ -213,25 +192,13 @@ export class FirebaseDrivingLicenseRepository implements DrivingLicenseRepositor
       }
 
       const userData = userDoc.data();
-      if (!userData.drivingLicenses) {
-        throw new Error('No driving licenses found for user');
+      if (!userData.drivingLicense) {
+        throw new Error('No driving license found for user');
       }
 
-      const licenses = Array.isArray(userData.drivingLicenses) 
-        ? [...userData.drivingLicenses] 
-        : [userData.drivingLicenses];
-
-      const licenseIndex = licenses.findIndex(l => `${userId}_${l.id || licenses.indexOf(l)}` === id);
-      if (licenseIndex === -1) {
-        throw new Error('Driving license not found');
-      }
-
-      // Remove the license
-      licenses.splice(licenseIndex, 1);
-
-      // Update the user document
+      // Remove the driving license field entirely
       await updateDoc(userDocRef, {
-        drivingLicenses: licenses
+        drivingLicense: null
       });
     } catch (error) {
       console.error('Error deleting driving license:', error);

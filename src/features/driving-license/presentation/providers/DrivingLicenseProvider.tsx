@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
 import { DrivingLicense, VerificationStatus, DrivingLicenseUpdate } from '../../domain/entities/DrivingLicense';
 import { FirebaseDrivingLicenseRepository } from '../../data/repositories/FirebaseDrivingLicenseRepository';
 import { GetAllDrivingLicensesUseCase } from '../../domain/usecases/GetAllDrivingLicensesUseCase';
@@ -30,14 +30,14 @@ export function DrivingLicenseProvider({ children }: DrivingLicenseProviderProps
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize repository and use cases
-  const repository = new FirebaseDrivingLicenseRepository();
-  const getAllDrivingLicensesUseCase = new GetAllDrivingLicensesUseCase(repository);
-  const getDrivingLicensesByStatusUseCase = new GetDrivingLicensesByStatusUseCase(repository);
-  const updateDrivingLicenseUseCase = new UpdateDrivingLicenseUseCase(repository);
-  const deleteDrivingLicenseUseCase = new DeleteDrivingLicenseUseCase(repository);
+  // Initialize repository and use cases (memoized)
+  const repository = useMemo(() => new FirebaseDrivingLicenseRepository(), []);
+  const getAllDrivingLicensesUseCase = useMemo(() => new GetAllDrivingLicensesUseCase(repository), [repository]);
+  const getDrivingLicensesByStatusUseCase = useMemo(() => new GetDrivingLicensesByStatusUseCase(repository), [repository]);
+  const updateDrivingLicenseUseCase = useMemo(() => new UpdateDrivingLicenseUseCase(repository), [repository]);
+  const deleteDrivingLicenseUseCase = useMemo(() => new DeleteDrivingLicenseUseCase(repository), [repository]);
 
-  const getAllDrivingLicenses = async () => {
+  const getAllDrivingLicenses = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -50,9 +50,9 @@ export function DrivingLicenseProvider({ children }: DrivingLicenseProviderProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAllDrivingLicensesUseCase]);
 
-  const getDrivingLicensesByStatus = async (status: VerificationStatus) => {
+  const getDrivingLicensesByStatus = useCallback(async (status: VerificationStatus) => {
     try {
       setLoading(true);
       setError(null);
@@ -65,9 +65,9 @@ export function DrivingLicenseProvider({ children }: DrivingLicenseProviderProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [getDrivingLicensesByStatusUseCase]);
 
-  const updateDrivingLicense = async (update: DrivingLicenseUpdate) => {
+  const updateDrivingLicense = useCallback(async (update: DrivingLicenseUpdate) => {
     try {
       setLoading(true);
       setError(null);
@@ -86,9 +86,9 @@ export function DrivingLicenseProvider({ children }: DrivingLicenseProviderProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [updateDrivingLicenseUseCase]);
 
-  const deleteDrivingLicense = async (id: string) => {
+  const deleteDrivingLicense = useCallback(async (id: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -105,11 +105,11 @@ export function DrivingLicenseProvider({ children }: DrivingLicenseProviderProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [deleteDrivingLicenseUseCase]);
 
-  const clearError = () => {
+  const clearError = useCallback(() => {
     setError(null);
-  };
+  }, []);
 
   const value: DrivingLicenseContextType = {
     drivingLicenses,

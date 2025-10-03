@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import QRCode from 'qrcode';
 
 interface UPIQRCodeProps {
@@ -99,9 +100,11 @@ export default function UPIQRCode({
   return (
     <div className={`text-center ${className}`}>
       <div className="inline-block p-4 bg-white rounded-lg shadow-lg">
-        <img 
+        <Image 
           src={qrDataUrl} 
           alt={`UPI QR Code for ${upiId}`}
+          width={200}
+          height={200}
           className="mx-auto"
         />
         <div className="mt-2 text-sm text-gray-600">
