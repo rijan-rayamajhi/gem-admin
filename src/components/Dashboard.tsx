@@ -4,7 +4,6 @@ import { useAuth } from '@/features/auth/presentation/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import ConfirmationDialog from './ConfirmationDialog';
-import PullToRefresh from './PullToRefresh';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -24,11 +23,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleRefresh = async () => {
-    // For dashboard, we can refresh the page or reload user data
-    // Since this is a simple dashboard, we'll just reload the page
-    window.location.reload();
-  };
 
   // Filter and sort feature cards based on search
   const filteredCards = useMemo(() => {
@@ -148,7 +142,7 @@ export default function Dashboard() {
   }, [searchFilter]);
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b border-primary sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
@@ -263,6 +257,6 @@ export default function Dashboard() {
         cancelText="Cancel"
         variant="destructive"
       />
-    </PullToRefresh>
+    </div>
   );
 }
